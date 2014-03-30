@@ -1,0 +1,79 @@
+CONFIG VCCAUX=3.3;
+#
+NET "ClkIn" TNM_NET = ClkIn;
+#
+TIMESPEC TS_ClkIn = PERIOD ClkIn 20.833 ns HIGH 50%;    #  48.0000 MHz
+#
+NET "Clk" TNM_NET = Clk;
+TIMESPEC TS_Clk   = PERIOD Clk TS_ClkIn * 1 HIGH 50%;           #  48.0000 MHz
+##
+#NET "Clk90" TNM_NET = Clk90;
+#TIMESPEC TS_Clk90 = PERIOD Clk90 TS_Clk * 1 PHASE 5.2083 ns;    #  48.0000 MHz
+##
+INST "ClkGen" AREA_GROUP=ClkGen;
+AREA_GROUP ClkGen RANGE=SLICE_X24Y58:SLICE_X26Y63;
+#
+################################################################################
+#
+#   Pin Placements
+#
+################################################################################
+#
+NET "nRst"          LOC = "P83" | IOSTANDARD = "LVCMOS33" | PULLUP;
+NET "ClkIn"         LOC = "P88" | IOSTANDARD = "LVCMOS33";
+#
+NET "nCE0"          LOC = "P73" | IOSTANDARD = "LVCMOS33" | SLEW = "FAST";
+
+NET "nOE"           LOC = "P78" | IOSTANDARD = "LVCMOS33" | SLEW = "FAST";
+NET "nWE"           LOC = "P90" | IOSTANDARD = "LVCMOS33" | SLEW = "FAST";
+
+NET "XA0"           LOC = "P37" | IOSTANDARD = "LVCMOS33";
+
+NET "A<15>"         LOC = "P84" | IOSTANDARD = "LVCMOS33";
+NET "A<14>"         LOC = "P40" | IOSTANDARD = "LVCMOS33";
+NET "A<13>"         LOC = "P93" | IOSTANDARD = "LVCMOS33";
+NET "A<12>"         LOC = "P41" | IOSTANDARD = "LVCMOS33";
+NET "A<11>"         LOC = "P99" | IOSTANDARD = "LVCMOS33";
+NET "A<10>"         LOC = "P77" | IOSTANDARD = "LVCMOS33";
+NET "A<9>"          LOC = "P98" | IOSTANDARD = "LVCMOS33";
+NET "A<8>"          LOC = "P94" | IOSTANDARD = "LVCMOS33";
+NET "A<7>"          LOC = "P43" | IOSTANDARD = "LVCMOS33";
+NET "A<6>"          LOC = "P44" | IOSTANDARD = "LVCMOS33";
+NET "A<5>"          LOC = "P49" | IOSTANDARD = "LVCMOS33";
+NET "A<4>"          LOC = "P50" | IOSTANDARD = "LVCMOS33";
+NET "A<3>"          LOC = "P52" | IOSTANDARD = "LVCMOS33";
+NET "A<2>"          LOC = "P56" | IOSTANDARD = "LVCMOS33";
+NET "A<1>"          LOC = "P57" | IOSTANDARD = "LVCMOS33";
+NET "A<0>"          LOC = "P59" | IOSTANDARD = "LVCMOS33";
+
+NET "DB<7>"         LOC = "P72" | IOSTANDARD = "LVCMOS33";
+NET "DB<6>"         LOC = "P71" | IOSTANDARD = "LVCMOS33";
+NET "DB<5>"         LOC = "P70" | IOSTANDARD = "LVCMOS33";
+NET "DB<4>"         LOC = "P65" | IOSTANDARD = "LVCMOS33";
+NET "DB<3>"         LOC = "P64" | IOSTANDARD = "LVCMOS33";
+NET "DB<2>"         LOC = "P62" | IOSTANDARD = "LVCMOS33";
+NET "DB<1>"         LOC = "P61" | IOSTANDARD = "LVCMOS33";
+NET "DB<0>"         LOC = "P60" | IOSTANDARD = "LVCMOS33";
+#
+NET "TxD_RS232_A"   LOC = "P33" | IOSTANDARD = "LVCMOS33";
+NET "nRTS_RS232_A"  LOC = "P32" | IOSTANDARD = "LVCMOS33";
+
+NET "DE_RS485_A"    LOC = "P36" | IOSTANDARD = "LVCMOS33";
+NET "TxD_RS485_A"   LOC = "P35" | IOSTANDARD = "LVCMOS33";
+#
+NET "TxD_RS232_B"   LOC = "P20" | IOSTANDARD = "LVCMOS33";
+NET "nRTS_RS232_B"  LOC = "P19" | IOSTANDARD = "LVCMOS33";
+
+NET "DE_RS485_B"    LOC = "P23" | IOSTANDARD = "LVCMOS33";
+NET "TxD_RS485_B"   LOC = "P24" | IOSTANDARD = "LVCMOS33";
+#
+NET "nCSO<1>"       LOC = "P28" | IOSTANDARD = "LVCMOS33";
+NET "nCSO<0>"       LOC = "P27" | IOSTANDARD = "LVCMOS33";
+NET "SCK"           LOC = "P53" | IOSTANDARD = "LVCMOS33";
+NET "MOSI"          LOC = "P46" | IOSTANDARD = "LVCMOS33";
+#
+NET "LED<1>"        LOC = "P25" | IOSTANDARD = "LVCMOS33";
+NET "LED<0>"        LOC = "P48" | IOSTANDARD = "LVCMOS33";
+#
+#NET "nWP"           LOC = "P68" | IOSTANDARD = "LVCMOS33" | PULLUP;
+##

@@ -1,0 +1,20 @@
+# Date: Fri Mar 28 21:31:01 2014
+SET addpads = False
+SET asysymbol = False
+SET busformat = BusFormatAngleBracketNotRipped
+SET createndf = False
+SET designentry = Verilog
+SET device = xc3s200a
+SET devicefamily = spartan3a
+SET flowvendor = Other
+SET formalverification = False
+SET foundationsym = False
+SET implementationfiletype = Ngc
+SET package = vq100
+SET removerpms = False
+SET simulationfiles = Behavioral
+SET speedgrade = -4
+SET verilogsim = True
+SET vhdlsim = False
+SET workingdirectory = C:\XProjects\ISE10.1i\M65C02_Arduino\Src\tmp
+
