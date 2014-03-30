@@ -35,26 +35,27 @@ The Chameleon provides the following connections to the Arduino UNO:
     (13) SDA        - AD[4];     SDA  (I2C Serial Data)   (Level Shift Open)
     (14) SCL        - AD[5];     SCL  (I2C Serial Clk)    (Level Shift Open)
 
-The term "Level Shift Open" indicates that the level shifter on board sup-
-ports open-source/open-drain type of signals. In other words, the level
-shifter can be used with open-drain busses such as I2C that use pull-up
-resistor to passively terminate the bus and to set the bus to logic 1. The
-term "Level Shift Drvr" is used to indicate that the level shifter on board
-is an active driver. The level shifter is not able to drive heavy loads, but
-it does actively switch. Thus, Chameleon I/O signals buffered by such a
-driver should not be used for open source/open drain busses.
+The term "Level Shift Open" indicates that the level shifter on board supports 
+open-source/open-drain type of signals. In other words, the level shifter can 
+be used with open-drain busses such as I2C that use pull-up resistor to 
+passively terminate the bus and to set the bus to logic 1. The term "Level 
+Shift Drvr" is used to indicate that the level shifter on board is an active 
+driver. The level shifter is not able to drive heavy loads, but it does 
+actively switch. Thus, Chameleon I/O signals buffered by such a driver should 
+not be used for open source/open drain busses.
 
 The Chameleon board is available with one of two Xilinx Spartan 3A FPGAs:
 
     (1) XC3S50A-4VQG100I, or
     (2) XC3S200A-4VQG100I.
 
-The XC3S50A FPGA is described by Xilinx as having the equivalent of 50,000
-logic gates. The XC3S50A has 1,408 FFs and 4-input Look-Up Tables (LUTs), 62
-I/O and 6 input-only user configurable pins, three (3) 18kb Block RAMs, and
-two Digital Clock Managers (DCMs). The XC3S200A has the same number of user con-
-figurable pins, but has 3,584 FFs and 4-input Look-Up Tables (LUTs), sixteen
-(16) 18kb Block RAMs, and 4 DCMs.
+The XC3S50A FPGA is described by Xilinx as having the equivalent of 50,000 
+logic gates. The XC3S50A has 1,408 FFs and 4-input Look-Up Tables (LUTs), 62 
+I/O and 6 input-only user configurable pins, three (3) 18kb Block RAMs, and 
+two Digital Clock Managers (DCMs). Xilinx describes the XC3S200A FPGA as 
+having the equivalent of 200,000 logic gates. The XC3S200A has the same number 
+of user configurable pins, but has 3,584 FFs and 4-input Look-Up Tables 
+(LUTs), sixteen (16) 18kb Block RAMs, and 4 DCMs.
 
 Beyond the twelve (12) I/O connections to the Arduino UNO, the Chameleon
 provides the following features:
@@ -68,16 +69,16 @@ In support of the open hardware concept of which the Arduino orgranization
 is a leader, the Chameleon is provided as an open hardware platform. The
 schematics and BOMs are freely available as PDFs. 
 
-The Chameleon board is primarily intended to be a slave device in an Arduino
-project. It specifically provides a number of interfaces between an Arduino
-base board and the Chameleon for this purpose (see above). It is envisioned
-that a Chameleon equipped with the XC3S50A FPGA will not contain a soft-core
-processor (as demonstrated in this project). With an XC3S50A FPGA, the board
-is best suited as a dual-channel bufferred interface for industrial automa-
-tion interfaces such as Modbus. The user/integrator is free to configure the
-much lower cost XC3S50A FPGA to use the external SRAM as a deep RAM-based
-FIFO, and to provide an I2C, SPI, or UART slave interface in order to inter-
-face the Chameleon to the Arduino base board.
+The Chameleon board is primarily intended to be a slave device in an Arduino 
+project. It specifically provides a number of interfaces between an Arduino 
+base board and the Chameleon for this purpose (see above). It is envisioned 
+that a Chameleon equipped with the XC3S50A FPGA will not contain a soft-core 
+processor (as demonstrated in this project). With an XC3S50A FPGA, the board 
+is best suited as a dual-channel bufferred interface for industrial automation 
+interfaces such as Modbus. The user/integrator is free to configure the much 
+lower cost XC3S50A FPGA to use the external SRAM as a deep RAM-based FIFO, and 
+to provide an I2C, SPI, or UART slave interface in order to interface the 
+Chameleon to the Arduino base board.
 
 With a XC3S200A FPGA, the Chameleon board can be used as a slave or a master
 device. As a slave device, a Chameleon board equipped with an XC3S200A FPGA
@@ -116,28 +117,28 @@ soft-core processor project based on the open-source M65C02 processor core.
 Using ISE 10.1i SP3, the implementation results for an XC3S200A-4VQ100I are as 
 follows:
 
-Device Utilization Summary [-] 
-Logic Utilization                                           Used    Avail   Util
-    Number of Slice Flip Flops                                758   3,584    21%   
-    Number of 4 input LUTs                                  1,479   3,584    41%
-   
-Logic Distribution          
-    Number of occupied Slices                                 896   1,792    50%   
-        Number of Slices containing only related logic        896     896   100%   
-        Number of Slices containing unrelated logic             0     896     0%
-           
-Total Number of 4 input LUTs                                1,492   3,584    41%   
-        Number used as logic                                1,354       
-        Number used as a route-thru                            13       
-        Number used for Dual Port RAMs                        124       
-        Number used as Shift registers                          1       
-
-Number of bonded IOBs 
-    Number of bonded                                           21      68    30%   
-    IOB Flip Flops                                              2       
-Number of BUFGMUXs                                              3      24    12%   
-Number of DCMs                                                  1       4    25%   
-Number of RAMB16BWEs                                           15      16    93%   
+    Device Utilization Summary
+    Logic Utilization                                       Used    Avail   Util
+        Number of Slice Flip Flops                            758   3,584    21%   
+        Number of 4 input LUTs                              1,479   3,584    41%
+                                                            
+    Logic Distribution                                      
+        Number of occupied Slices                             896   1,792    50%   
+            Number of Slices containing only related logic    896     896   100%   
+            Number of Slices containing unrelated logic         0     896     0%
+                                                            
+    Total Number of 4 input LUTs                            1,492   3,584    41%   
+            Number used as logic                            1,354       
+            Number used as a route-thru                        13       
+            Number used for Dual Port RAMs                    124       
+            Number used as Shift registers                      1       
+                                                            
+    Number of bonded IOBs                                   
+        Number of bonded                                       21      68    30%   
+        IOB Flip Flops                                          2       
+    Number of BUFGMUXs                                          3      24    12%   
+    Number of DCMs                                              1       4    25%   
+    Number of RAMB16BWEs                                       15      16    93%   
  
 Best Case Achievable:   20.370 ns (0.231 ns Setup, 0.617 ns Hold)
 
