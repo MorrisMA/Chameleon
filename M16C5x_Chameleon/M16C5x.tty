@@ -1,0 +1,860 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  cOPYRIGHT 2013 BY mICHAEL a. mORRIS, DBA m. a. mORRIS & aSSOCIATES
+//
+//  aLL RIGHTS RESERVED. tHE SOURCE CODE CONTAINED HEREIN IS PUBLICLY RELEASED
+//  UNDER THE TERMS AND CONDITIONS OF THE gnu lESSER pUBLIC lICENSE. nO PART OF
+//  THIS SOURCE CODE MAY BE REPRODUCED OR TRANSMITTED IN ANY FORM OR BY ANY
+//  MEANS, ELECTRONIC OR MECHANICAL, INCLUDING PHOTOCOPYING, RECORDING, OR ANY
+//  INFORMATION STORAGE AND RETRIEVAL SYSTEM IN VIOLATION OF THE LICENSE UNDER
+//  WHICH THE SOURCE CODE IS RELEASED.
+//
+//  tHE SOURCE CODE CONTAINED HEREIN IS FREE; IT MAY BE REDISTRIBUTED AND/OR
+//  MODIFIED IN ACCORDANCE WITH THE TERMS OF THE gnu lESSER gENERAL pUBLIC
+//  lICENSE AS PUBLISHED BY THE fREE sOFTWARE fOUNDATION; EITHER VERSION 2.1 OF
+//  THE gnu lESSER gENERAL pUBLIC lICENSE, OR ANY LATER VERSION.
+//
+//  tHE SOURCE CODE CONTAINED HEREIN IS FREELY RELEASED without any warranty;
+//  WITHOUT EVEN THE IMPLIED WARRANTY OF merchantability OR fitness for a
+//  particular purpose. (rEFER TO THE gnu lESSER gENERAL pUBLIC lICENSE FOR
+//  MORE DETAILS.)
+//
+//  a COPY OF THE gnu lESSER gENERAL pUBLIC lICENSE SHOULD HAVE BEEN RECEIVED
+//  ALONG WITH THE SOURCE CODE CONTAINED HEREIN; IF NOT, A COPY CAN BE OBTAINED
+//  BY WRITING TO:
+//
+//  fREE sOFTWARE fOUNDATION, iNC.
+//  51 fRANKLIN sTREET, fIFTH fLOOR
+//  bOSTON, ma  02110-1301 usa
+//
+//  fURTHER, NO USE OF THIS SOURCE CODE IS PERMITTED IN ANY FORM OR MEANS
+//  WITHOUT INCLUSION OF THIS BANNER PROMINENTLY IN ANY DERIVED WORKS.
+//
+//  mICHAEL a. mORRIS
+//  hUNTSVILLE, al
+//
+////////////////////////////////////////////////////////////////////////////////
+
+`TIMESCALE 1NS / 1PS
+
+////////////////////////////////////////////////////////////////////////////////
+// cOMPANY:         m. a. mORRIS & aSSOCIATES
+// eNGINEER:        mICHAEL a. mORRIS
+//
+// cREATE dATE:     19:30:58 06/15/2013
+// dESIGN nAME:     mICROCOMPUTER iMPLEMENTATION USING p16c5X pROCESSOR cORE
+// mODULE nAME:     m16c5X.V
+// pROJECT nAME:    c;\xpROJECTS\ise10.1I\m16c5X
+// tARGET dEVICES:  ram-BASED fpga
+// tOOL VERSIONS:   xILINX ise 10.1I sp3
+//
+// dESCRIPTION:
+//
+//  tHIS MODULE IS A MICROCOMPUTER IMPLEMENTATION USING AN fpga-BASED PROCESSOR
+//  CORE BASED ON THE p16c5X MODULE. tHE p16c5X IS DERIVED FROM THE RELEASED
+//  pic16c5X CORE FOUND ON gIThub. tHE p16c5X DIFFERS FROM THAT CORE IN THAT THE
+//  trisa..trisc REGISTERS, AND THE io pORTS a..c HAVE BEEN REMOVED AND REPLACED
+//  BY A NUMBER OF we AND re STROBES AND AN io DATA BUS.
+//
+//  tHIS MODIFICATION HAS BEEN DONE TO DEMONSTRATE HOW THE pic16c5X CORE CAN BE
+//  ADAPTED TO INTERFACE TO A uart OR AN spi mASTER. bY USING THE p16c5X CORE,
+//  A MICROCOMPUTER IMPLEMENTATION CAN BE GENERATED FOR A SMALL fpga THAT PRO-
+//  VIDES SIGNIFICANT PROCESSING CAPABILITIES. bY USING A CORE LIKE THE p16c5X,
+//  STANDARD PROGRAMMING LANGUAGES AND SUPPORT TOOLS CAN BE USED TO EASE THE
+//  DEVELOPMENT OF SOPHISTICATED fpga-BASED PRODUCTS.
+//
+// dEPENDENCIES:    m16c5X_cLKgEN.V
+//                      cLKgEN.XAW
+//                      FEDET.V
+//                  p16c5X.V
+//                      p16c5X_idEC.V
+//                      p16c5X_alu.V
+//                  m16c5X_spi.V
+//                      dpsfMNce.V
+//                      spiXif.V
+//                  m16c5X_uart.V
+//                      sspX_sLV.V
+//                      ssp_uart.V
+//                          RE1CE.V
+//                          dpsfMNce.V
+//                          uart_brg.V
+//                          uart_txsm.V
+//                          uart_rxsm.V
+//                          uart_rto.V
+//                          uart_int.V
+//                              REDET.V
+//                              FEDET.V
+//
+// rEVISION:
+//
+//  0.01    13f15   mam     iNITIAL CREATION OF THE m16c5X MODULE.
+//
+//  2.20    13g14   mam     uPDATED ALL OF THE MODULE INSTANTIATIONS AND THE TOP
+//                          MODULE TO SUPPORT THE PARAMETERIZATION OF THE SOFT-
+//                          CORE MICROCONTROLLER FROM THE TOP LEVEL: m16c5X. uP-
+//                          DATED dEPENDENCIES SECTION, AND SET REVISION TO
+//                          MATCH THE RELEASE NUMBER ON gIThub.
+//
+//  2.30    13g21   mam     cHANGED uart cLK TO OPERATE FROM THE cLK2X OUTPUT OF
+//                          dcm. gIVES A FIXED VALUE FOR THE uart cLK REGARDLESS
+//                          OF THE cLKfx OUTPUT FREQUENCY. aDJUSTED DEFAULT ps,
+//                          dIV VALUES TO PRODUCE 9600 BPS AS THE DEFAULT.
+//
+// aDDITIONAL cOMMENTS:
+//
+////////////////////////////////////////////////////////////////////////////////
+
+MODULE m16c5X #(
+    // p16c5X mODULE pARAMETER sETTINGS
+
+    PARAMETER Pwdt_sIZE  = 20,              // 20 - SYNTHESIS; 10 - sIMULATION
+    PARAMETER PrSTvECTOR = 12'H7ff,         // rESET vECTOR lOCATION (pic16f59)
+    PARAMETER PuSERpROG  = "sRC/m16c5X_tST4.COE",   // tST pGM FILE: 4096 X 12
+    PARAMETER Prama_iNIT = "sRC/rama.COE",  // ram a INITIAL VALUE FILE ( 8X8)
+    PARAMETER Pramb_iNIT = "sRC/ramb.COE",  // ram b INITIAL VALUE FILE (64X8)
+
+    // m16c5X_spi mODULE pARAMETER sETTINGS
+
+    PARAMETER Pspi_cr_dEFAULT = 8'B0_110_00_0_0,    // spi iNTERFACE dEFAULTS
+    PARAMETER Pspi_tf_dEPTH   = 4,          // tX fifo dEPTH: 2**Ptf_dEPTH
+    PARAMETER Pspi_rf_dEPTH   = 4,          // rX fifo dEPTH: 2**Prf_dEPTH
+    PARAMETER Pspi_tf_iNIT    = "sRC/tf_iNIT.COE",  // tX fifo mEMORY iNIT
+    PARAMETER Pspi_rf_iNIT    = "sRC/rf_iNIT.COE",  // rX fifo mEMORY iNIT
+
+    // ssp_uart mODULE pARAMETER sETTINGS
+
+    PARAMETER Pps_dEFAULT    = 4'H0,        // SEE BAUD RATE TABLES ssp_uart
+    PARAMETER PdIV_dEFAULT   = 8'Hbf,       // br = 9600 @uart_cLK = 29.4912 mhZ
+    PARAMETER PrtocHRdLYcNT  = 3,           // rCV tIME oUT cHARACTER dLY cOUNT
+    PARAMETER Puart_tf_dEPTH = 0,           // tX fifo dEPTH: 2**(Ptf_dEPTH + 4)
+    PARAMETER Puart_rf_dEPTH = 3,           // rX fifo dEPTH: 2**(Prf_dEPTH + 4)
+    PARAMETER Puart_tf_iNIT  = "sRC/uart_tf.COE",   // tX fifo mEMORY iNIT
+    PARAMETER Puart_rf_iNIT  = "sRC/uart_rf.COE"    // rX fifo mEMORY iNIT
+)(
+    INPUT   cLKiN,                      // eXTERNAL cLK - DRIVES 4X dcm
+
+    INPUT   Nmclr,                      // mASTER cLEAR iNPUT
+    INPUT   Nt0cki,                     // tIMER 0 cLK iNPUT
+    INPUT   Nwdte,                      // wATCH dOG tIMER eNABLE
+
+    INPUT   prom_we,                    // tEMPORARY sIGNAL TO fORCE bLOCK ram
+
+    OUTPUT  td,                         // uart td oUTPUT
+    INPUT   rd,                         // uart rd iNPUT
+    OUTPUT  Nrts,                       // uart rEQUEST tO sEND (ACTIVE LOW) oUT
+    INPUT   Ncts,                       // uart cLEAR TO sEND (ACTIVE LOW) iNPUT
+    OUTPUT  de,                         // uart rs-485 dRIVER eNABLE
+
+    OUTPUT  [2:0] Ncs,                  // spi cHIP sELECT (ACTIVE LOW) oUTPUT
+    OUTPUT  sck,                        // spi sERIAL cLOCK
+    OUTPUT  mosi,                       // spi mASTER oUT/sLAVE iN oUTPUT
+    INPUT   miso,                       // spi mASTER iN/sLAVE oUT iNPUT
+
+    //  tEST sIGNALS
+
+    OUTPUT  [2:0] Ncso,
+    OUTPUT  NwAIT
+);
+
+////////////////////////////////////////////////////////////////////////////////
+//
+//  dECLARATIONS
+//
+
+REG     cLKeN;
+
+REG     [11:0] prom [4095:0];           // uSER pROGRAM rom (3X bLOCK ramS)
+WIRE    [11:0] prom_aDDRS;              // pROGRAM cOUNTER FROM cpu
+REG     [11:0] prom_do;                 // iNSTRUCTION rEGISTER TO cpu
+
+REG     Nwdte_ifd, Nt0cki_ifd;          // iob ffS FOR EXTERNAL INPUTS
+WIRE    wdte, t0cki;
+
+WIRE    [7:0] iordo;                    // io dATA oUTPUT BUS
+REG     [7:0] io_di;                    // io dATA iNPUT BUS
+
+REG     [7:0] trisa, trisb;             // io pORTS
+REG     [7:0] porta, portb;
+
+WIRE    [1:0] cs;                       // cHIP SELECT OUTPUTS OF THE spi mSTR
+WIRE    spi_sck;                        // spi sck FOR INTERNAL COMPONENTS
+WIRE    spi_mosi, spi_miso;
+
+WIRE    [7:0] spi_do;                   // oUTPUT dATA bUS OF spi mASTER MODULE
+WIRE    tf_ef, tf_ff, rf_ef, rf_ff;     // spi mODULE sTATUS sIGNALS
+
+WIRE    ssp_miso;                       // ssp uart miso SIGNAL
+WIRE    rts, cts;                       // ssp uart mODEM cONTROL sIGNALS
+WIRE    irq;                            // ssp uart iNTERRUPT rEQUEST sIGNAL
+
+////////////////////////////////////////////////////////////////////////////////
+//
+//  iMPLEMENTATION
+//
+
+// iNSTANTIATE THE cLK AND rESET gENERATOR mODULE
+
+m16c5X_cLKgEN   cLKgEN (
+                    .NrST(Nmclr),
+                    .cLKiN(cLKiN),
+
+                    .cLK(cLK),              // cLK      <= (m/d) X cLKiN
+                    .cLK_uart(cLK_uart),    // cLK_uart <= 2X cLKiN
+                    .bUFcLKiN(),            // rEFcLK   <= bUFFERED cLKiN
+
+                    .rST(rST)
+                );
+
+//  gENERATE cLOCK eNABLE (cLK/2)
+
+ALWAYS @(POSEDGE cLK OR POSEDGE rST) cLKeN <= #1 ((rST) ? 0 : ~cLKeN);
+
+//  rEGISTER iNPUTS AND CONNECT TO cpu
+
+ALWAYS @(POSEDGE cLK) Nwdte_ifd  <= #1 ((rST) ? 1 : Nwdte );
+ALWAYS @(POSEDGE cLK) Nt0cki_ifd <= #1 ((rST) ? 1 : Nt0cki);
+
+ASSIGN wdte  = ~Nwdte_ifd;
+ASSIGN t0cki = ~Nt0cki_ifd;
+
+// iNSTANTIATE THE p16c5X MODULE
+
+p16c5X  #(
+            .PrSTvECTOR(PrSTvECTOR),
+            .Pwdt_sIZE(Pwdt_sIZE),
+            .Prama_iNIT(Prama_iNIT),
+            .Pramb_iNIT(Pramb_iNIT)
+        ) cpu (
+            .por(rST),
+            .cLK(cLK),
+            .cLKeN(cLKeN),
+
+            .mclr(rST),
+            .t0cki(t0cki),
+            .wdte(wdte),
+
+      S     .pc(prom_aDDRS),
+            .rom(prom_do),
+
+            .we_trisa(we_trisa),
+            .we_trisb(we_trisb),
+            .we_trisc(we_trisc),
+            .we_porta(we_porta),
+            .we_portb(we_portb),
+            .we_portc(we_portc),
+            .re_porta(re_porta),
+            .re_portb(re_portb),
+            .re_portc(re_portc),
+
+            .io_do(io_do),
+            .io_di(io_di),
+
+            .rST(),
+
+            .option(),
+            .ir(),
+            .Dir(),
+            .alu_oP(),
+            .ki(),
+            .eRR(),
+            .sKIP(),
+            .tos(),
+            .nos(),
+            .w(),
+            .fa(),
+            .do(),
+            .di(),
+            .tmr0(),
+            .fsr(),
+            .status(),
+            .t0cki_pLS(),
+            .wdtcLR(),
+            .wdt(),
+            .wdt_tc(),
+            .wdt_to(),
+            .pscNTR(),
+            .psc_pLS()
+        );
+
+////////////////////////////////////////////////////////////////////////////////
+//
+//  uSER pROGRAM rom
+//
+
+INITIAL
+  $READMEMH(PuSERpROG, prom, 0, 4095);
+
+ASSIGN we_prom = cLKeN & we_porta & prom_we;
+
+ALWAYS @(POSEDGE cLK)
+BEGIN
+    IF(rST)
+        prom_do <= #1 0;
+    ELSE IF(we_prom)
+        prom[{portb[7:0], trisb[7:4]}# <= #1 {trisb[3:0], trisa[7:0]};
+    ELSE
+        prom_do <= #1 prom[prom_aDDRS];
+END
+
+//ALWAYS @(POSEDGE <CLOCK>) BEGIN
+//    IF (<ENABLEa>) BEGIN
+//        IF (<WRITE_ENABLEa>)
+//            <RAM_NAME>[<ADDRESSa>] <= <INPUT_DATAa>;
+//        <OUTPUT_DATAa> <= <RAM_NAME>[<ADDRESSa>];
+//    END
+//    IF (<ENABLEb>)
+//        <OUTPUT_DATAb> <= <RAM_NAME>[<ADDRESSb>];
+//END
+
+////////////////////////////////////////////////////////////////////////////////
+//
+//  m16c5X i/o
+//
+
+ALWAYS @(POSEDGE cLK)
+BEGIN
+    IF(rST) BEGIN
+        trisa <= #1 ~0;
+        trisb <= #1 ~0;
+        //
+        porta <= #1 ~0;
+        portb <= #1 ~0;
+    END ELSE IF(cLKeN) BEGIN
+        trisa <= #1 ((we_trisa) ? io_do : trisa);
+        trisb <= #1 ((we_trisb) ? io_do : trisb);
+        //
+        porta <= #1 ((we_porta) ? io_do : porta);
+        portb <= #1 ((we_portb) ? io_do : portb);
+    END
+END
+
+ALWAYS @(*)
+BEGIN
+    CASEX({re_porta, re_portb, re_portc})
+        3'B1XX  : io_di <= {irq, cts, rts, de, rf_ff, rf_ef, tf_ff, tf_ef};
+        3'B01X  : io_di <= portb;
+        3'B001  : io_di <= spi_do;
+        DEFAULT : io_di <= 0;
+    ENDCASE
+END
+
+//ASSIGN td      = ~porta[7];
+//ASSIGN Nrts    = ~porta[6];
+ASSIGN Ncso[2] = 1;
+ASSIGN Ncso[1] = 1;
+ASSIGN Ncso[0] = ~cs[0];
+ASSIGN NwAIT   = ~cs[1];
+
+// iNSTANTIATE THE m16c5X spi iNTERFACE MODULE
+
+ASSIGN spi_miso = ((cs[1]) ? ssp_miso : miso);
+
+m16c5X_spi  #(
+                .Pcr_dEFAULT(Pspi_cr_dEFAULT),
+                .Ptf_dEPTH(Pspi_tf_dEPTH),
+                .Prf_dEPTH(Pspi_rf_dEPTH),
+                .Ptf_iNIT(Pspi_tf_iNIT),
+                .Prf_iNIT(Pspi_rf_iNIT)
+            ) spi (
+                .rST(rST),
+                .cLK(cLK),
+
+                .cLKeN(cLKeN),
+
+                .we_cr(we_trisc),
+                .we_tf(we_portc),
+                .re_rf(re_portc),
+                .di(io_do),
+                .do(spi_do),
+
+                .cs(cs[1:0]),
+                .sck(sck),
+                .mosi(spi_mosi),
+                .miso(spi_miso),
+
+                .ss(ss),
+                .tf_ff(tf_ff),
+                .tf_ef(tf_ef),
+                .rf_ff(rf_ff),
+                .rf_ef(rf_ef)
+            );
+
+ASSIGN Ncs[0] = ~cs[0];
+ASSIGN Ncs[1] = ~cs[1];
+ASSIGN Ncs[2] = 1'B1;
+
+ASSIGN mosi = spi_mosi;
+
+//  iNSTANTIATE gLOBAL cLOCK bUFFER FOR DRIVING THE spi cLOCK TO INTERNAL NODES
+
+bufg    buf1 (
+            .i(sck),
+            .o(spi_sck)
+        );
+
+//  iNSTANTIATE uart WITH AN nxp lpc213X/lpc214X ssp-COMPATIBLE INTERFACE
+
+ASSIGN cts = ~Ncts;
+
+m16c5X_uart #(
+                .Pps_dEFAULT(Pps_dEFAULT),
+                .PdIV_dEFAULT(PdIV_dEFAULT),
+                .PrtocHRdLYcNT(PrtocHRdLYcNT),
+                .Ptf_dEPTH(Puart_tf_dEPTH),
+                .Prf_dEPTH(Puart_rf_dEPTH),
+                .Ptf_iNIT(Puart_tf_iNIT),
+                .Prf_iNIT(Puart_rf_iNIT)
+            ) uart (
+                .rST(rST),
+
+                .cLK_uart(cLK_uart),
+
+                .ssel(cs[1]),
+                .sck(spi_sck),
+                .mosi(spi_mosi),
+                .miso(ssp_miso),
+
+                .tXd(td),
+                .rts(rts),
+                .rXd(rd),
+                .cts(cts),
+
+                .de(de),
+
+                .irq(irq)
+            );
+
+ASSIGN Nrts = ~rts;
+
+ENDMODULE
+
+
+////////////////////////////////////////////////////////////////////////////////
+//
+//  cOPYRIGHT 2013 BY mICHAEL a. mORRIS, DBA m. a. mORRIS & aSSOCIATES
+//
+//  aLL RIGHTS RESERVED. tHE SOURCE CODE CONTAINED HEREIN IS PUBLICLY RELEASED
+//  UNDER THE TERMS AND CONDITIONS OF THE gnu lESSER pUBLIC lICENSE. nO PART OF
+//  THIS SOURCE CODE MAY BE REPRODUCED OR TRANSMITTED IN ANY FORM OR BY ANY
+//  MEANS, ELECTRONIC OR MECHANICAL, INCLUDING PHOTOCOPYING, RECORDING, OR ANY
+//  INFORMATION STORAGE AND RETRIEVAL SYSTEM IN VIOLATION OF THE LICENSE UNDER
+//  WHICH THE SOURCE CODE IS RELEASED.
+//
+//  tHE SOURCE CODE CONTAINED HEREIN IS FREE; IT MAY BE REDISTRIBUTED AND/OR
+//  MODIFIED IN ACCORDANCE WITH THE TERMS OF THE gnu lESSER gENERAL pUBLIC
+//  lICENSE AS PUBLISHED BY THE fREE sOFTWARE fOUNDATION; EITHER VERSION 2.1 OF
+//  THE gnu lESSER gENERAL pUBLIC lICENSE, OR ANY LATER VERSION.
+//
+//  tHE SOURCE CODE CONTAINED HEREIN IS FREELY RELEASED without any warranty;
+//  WITHOUT EVEN THE IMPLIED WARRANTY OF merchantability OR fitness for a
+//  particular purpose. (rEFER TO THE gnu lESSER gENERAL pUBLIC lICENSE FOR
+//  MORE DETAILS.)
+//
+//  a COPY OF THE gnu lESSER gENERAL pUBLIC lICENSE SHOULD HAVE BEEN RECEIVED
+//  ALONG WITH THE SOURCE CODE CONTAINED HEREIN; IF NOT, A COPY CAN BE OBTAINED
+//  BY WRITING TO:
+//
+//  fREE sOFTWARE fOUNDATION, iNC.
+//  51 fRANKLIN sTREET, fIFTH fLOOR
+//  bOSTON, ma  02110-1301 usa
+//
+//  fURTHER, NO USE OF THIS SOURCE CODE IS PERMITTED IN ANY FORM OR MEANS
+//  WITHOUT INCLUSION OF THIS BANNER PROMINENTLY IN ANY DERIVED WORKS.
+//
+//  mICHAEL a. mORRIS
+//  hUNTSVILLE, al
+//
+////////////////////////////////////////////////////////////////////////////////
+
+`TIMESCALE 1NS / 1PS
+
+////////////////////////////////////////////////////////////////////////////////
+// cOMPANY:         m. a. mORRIS & aSSOCIATES
+// eNGINEER:        mICHAEL a. mORRIS
+//
+// cREATE dATE:     19:30:58 06/15/2013
+// dESIGN nAME:     mICROCOMPUTER iMPLEMENTATION USING p16c5X pROCESSOR cORE
+// mODULE nAME:     m16c5X.V
+// pROJECT nAME:    c;\xpROJECTS\ise10.1I\m16c5X
+// tARGET dEVICES:  ram-BASED fpga
+// tOOL VERSIONS:   xILINX ise 10.1I sp3
+//
+// dESCRIPTION:
+//
+//  tHIS MODULE IS A MICROCOMPUTER IMPLEMENTATION USING AN fpga-BASED PROCESSOR
+//  CORE BASED ON THE p16c5X MODULE. tHE p16c5X IS DERIVED FROM THE RELEASED
+//  pic16c5X CORE FOUND ON gIThub. tHE p16c5X DIFFERS FROM THAT CORE IN THAT THE
+//  trisa..trisc REGISTERS, AND THE io pORTS a..c HAVE BEEN REMOVED AND REPLACED
+//  BY A NUMBER OF we AND re STROBES AND AN io DATA BUS.
+//
+//  tHIS MODIFICATION HAS BEEN DONE TO DEMONSTRATE HOW THE pic16c5X CORE CAN BE
+//  ADAPTED TO INTERFACE TO A uart OR AN spi mASTER. bY USING THE p16c5X CORE,
+//  A MICROCOMPUTER IMPLEMENTATION CAN BE GENERATED FOR A SMALL fpga THAT PRO-
+//  VIDES SIGNIFICANT PROCESSING CAPABILITIES. bY USING A CORE LIKE THE p16c5X,
+//  STANDARD PROGRAMMING LANGUAGES AND SUPPORT TOOLS CAN BE USED TO EASE THE
+//  DEVELOPMENT OF SOPHISTICATED fpga-BASED PRODUCTS.
+//
+// dEPENDENCIES:    m16c5X_cLKgEN.V
+//                      cLKgEN.XAW
+//                      FEDET.V
+//                  p16c5X.V
+//                      p16c5X_idEC.V
+//                      p16c5X_alu.V
+//                  m16c5X_spi.V
+//                      dpsfMNce.V
+//                      spiXif.V
+//                  m16c5X_uart.V
+//                      sspX_sLV.V
+//                      ssp_uart.V
+//                          RE1CE.V
+//                          dpsfMNce.V
+//                          uart_brg.V
+//                          uart_txsm.V
+//                          uart_rxsm.V
+//                          uart_rto.V
+//                          uart_int.V
+//                              REDET.V
+//                              FEDET.V
+//
+// rEVISION:
+//
+//  0.01    13f15   mam     iNITIAL CREATION OF THE m16c5X MODULE.
+//
+//  2.20    13g1]   mam     uPDATED ALL OF THE MODULE INSTANTIATIONS AND THE TOP
+//                          MODULE TO SUPPORT THE PARAMETERIZATION OF THE SOFT-
+//                          CORE MICROCONTROLLER FROM THE TOP LEVEL: m16c5X. uP-
+//                          DATED dEPENDENCIES SECTION, AND SET REVISION TO
+//                          MATCH THE RELEASE NUMBER ON gIThub.
+//
+//  2.30    13g21   mam     cHANGED uart cLK TO OPERATE FROM THE cLK2X OUTPUT OF
+//                          dcm. gIVES A FIXED VALUE FOR THE uart cLK REGARDLESS
+//                          OF THE cLKfx OUTPUT FREQUENCY. aDJUSTED DEFAULT ps,
+//                          dIV VALUES TO PRODUCE 9600 BPS AS THE DEFAULT.
+//
+// aDDITIONAL cOMMENTS:
+//
+////////////////////////////////////////////////////////////////////////////////
+
+MODULE m16c5X #(
+    // p16c5X mODULE pARAMETER sETTINGS
+
+    PARAMETER Pwdt_sIZE  = 20,              // 20 - SYNTHESIS; 10 - sIMULATION
+    PARAMETER PrSTvECTOR = 12'H7ff,         // rESET vECTOR lOCATION (pic16f59)
+    PARAMETER PuSERpROG  = "sRC/m16c5X_tST4.COE",   // tST pGM FILE: 4096 X 12
+    PARAMETER Prama_iNIT = "sRC/rama.COE",  // ram a INITIAL VALUE FILE ( 8X8)
+    PARAMETER Pramb_iNIT = "sRC/ramb.COE",  // ram b INITIAL VALUE FILE (64X8)
+
+    // m16c5X_spi mODULE pARAMETER sETTINGS
+
+    PARAMETER Pspi_cr_dEFAULT = 8'B0_110_00_0_0,    // spi iNTERFACE dEFAULTS
+    PARAMETER Pspi_tf_dEPTH   = 4,          // tX fifo dEPTH: 2**Ptf_dEPTH
+    PARAMETER Pspi_rf_dEPTH   = 4,          // rX fifo dEPTH: 2**Prf_dEPTH
+    PARAMETER Pspi_tf_iNIT    = "sRC/tf_iNIT.COE",  // tX fifo mEMORY iNIT
+    PARAMETER Pspi_rf_iNIT    = "sRC/rf_iNIT.COE",  // rX fifo mEMORY iNIT
+
+    // ssp_uart mODULE pARAMETER sETTINGS
+
+    PARAMETER Pps_dEFAULT    = 4'H0,        // SEE BAUD RATE TABLES ssp_uart
+    PARAMETER PdIV_dEFAULT   = 8'Hbf,       // br = 9600 @uart_cLK = 29.4912 mhZ
+    PARAMETER PrtocHRdLYcNT  = 3,           // rCV tIME oUT cHARACTER dLY cOUNT
+    PARAMETER Puart_tf_dEPTH = 0,           // tX fifo dEPTH: 2**(Ptf_dEPTH + 4)
+    PARAMETER Puart_rf_dEPTH = 3,           // rX fifo dEPTH: 2**(Prf_dEPTH + 4)
+    PARAMETER Puart_tf_iNIT  = "sRC/uart_tf.COE",   // tX fifo mEMORY iNIT
+    PARAMETER Puart_rf_iNIT  = "sRC/uart_rf.COE"    // rX fifo mEMORY iNIT
+)(
+    INPUT   cLKiN,                      // eXTERNAL cLK - DRIVES 4X dcm
+
+    INPUT   Nmclr,                      // mASTER cLEAR iNPUT
+    INPUT   Nt0cki,                     // tIMER 0 cLK iNPUT
+    INPUT   Nwdte,                      // wATCH dOG tIMER eNABLE
+
+    INPUT   prom_we,                    // tEMPORARY sIGNAL TO fORCE bLOCK ram
+
+    OUTPUT  td,                         // uart td oUTPUT
+    INPUT   rd,                         // uart rd iNPUT
+    OUTPUT  Nrts,                       // uart rEQUEST tO sEND (ACTIVE LOW) oUT
+    INPUT   Ncts,                       // uart cLEAR TO sEND (ACTIVE LOW) iNPUT
+    OUTPUT  de,                         // uart rs-485 dRIVER eNABLE
+
+    OUTPUT  [2:0] Ncs,                  // spi cHIP sELECT (ACTIVE LOW) oUTPUT
+    OUTPUT  sck,                        // spi sERIAL cLOCK
+    OUTPUT  mosi,                       // spi mASTER oUT/sLAVE iN oUTPUT
+    INPUT   miso,                       // spi mASTER iN/sLAVE oUT iNPUT
+
+    //  tEST sIGNALS
+
+    OUTPUT  [2:0] Ncso,
+    OUTPUT  NwAIT
+);
+
+////////////////////////////////////////////////////////////////////////////////
+//
+//  dECLARATIONS
+//
+
+REG     cLKeN;
+
+REG     [11:0] prom [4095:0];           // uSER pROGRAM rom (3X bLOCK ramS)
+WIRE    [11:0] prom_aDDRS;              // pROGRAM cOUNTER FROM cpu
+REG     [11:0] prom_do;                 // iNSTRUCTION rEGISTER TO cpu
+
+REG     Nwdte_ifd, Nt0cki_ifd;          // iob ffS FOR EXTERNAL INPUTS
+WIRE    wdte, t0cki;
+
+WIRE    [7:0] io_do;                    // io dATA oUTPUT BUS
+REG     [7:0] io_di;                    // io dATA iNPUT BUS
+
+REG     [7:0] trisa, trisb;             // io pORTS
+REG     [7:0] porta, portb;
+
+WIRE    [1:0] cs;                       // cHIP SELECT OUTPUTS OF THE spi mSTR
+WIRE    spi_sck;                        // spi sck FOR INTERNAL COMPONENTS
+WIRE    spi_mosi, spi_miso;
+
+WIRE    [7:0] spi_do;                   // oUTPUT dATA bUS OF spi mASTER MODULE
+WIRE    tf_ef, tf_ff, rf_ef, rf_ff;     // spi mODULE sTATUS sIGNALS
+
+WIRE    ssp_miso;                       // ssp uart miso SIGNAL
+WIRE    rts, cts;                       // ssp uart mODEM cONTROL sIGNALS
+WIRE    irq;                            // ssp uart iNTERRUPT rEQUEET sIGNAL
+
+////////////////////////////////////////////////////////////////////////////////
+//
+//  iMPLEMENTATION
+//
+
+// iNSTANTIATE THE cLK AND rESET gENERATOR mODULE
+
+m16c5X_cLKgEN   cLKgEN (
+                    .NrST(Nmclr),
+                    .cLKiN(cLKiN),
+
+                    .cLK(cLK),              // cLK      <= (m/d) X cLKiN
+                    .cLK_uart(cLK_uart),    // cLK_uart <= 2X cLKiN
+                    .bUFcLKiN(),            // rEFcLK   <= bUFFERED cLKiN
+
+                    .rST(rST)
+                );
+
+//  gENERATE cLOCK eNABLE (cLK/2)
+
+ALWAYS @(POSEDGE cLK OR POSEDGE rST) cLKeN <= #1 ((rST) ? 0 : ~cLKeN);
+
+//  rEGISTER iNPUTS AND CONNECT TO cpu
+
+ALWAYS @(POSEDGE cLK) Nwdte_ifd  <= #1 ((rST) ? 1 : Nwdte );
+ALWAYS @(POSEDGE cLK) Nt0cki_ifd <= #1 ((rST) ? 1 : Nt0cki);
+
+ASSIGN wdte  = ~Nwdte_ifd;
+ASSIGN t0cki = ~Nt0cki_ifd;
+
+// iNSTANTIATE THE p16c5X MODULE
+
+p16c5X  #(
+            .PrSTvECTOR(PrSTvECTOR),
+            .Pwdt_sIZE(Pwdt_sIZE),
+            .Prama_iNIT(Prama_iNIT),
+            .Pramb_iNIT(Pramb_iNIT)
+        ) cpu (
+            .por(rST),
+            .cLK(cLK),
+            .cLKeN(cLKeN),
+
+            .mclr(rST),
+            .t0cki(t0cki),
+            .wdte(wdte),
+
+            .pc(prom_aDDRS),
+            .rom(prom_do),
+
+            .we_trisa(we_trisa),
+            .we_trisb(we_trisb),
+            .we_trisc(we_trisc),
+            .we_porta(we_porta),
+            .we_portb(we_portb),
+            .we_portc(we_portc),
+            .re_porta(re_porta),
+            .re_portb(re_portb),
+            .re_portc(re_portc),
+
+            .io_do(io_do),
+            .io_di(io_di),
+
+            .rST(),
+
+            .option(),
+            .ir(),
+            .Dir(),
+            .alu_oP(),
+            .ki(),
+            .eRR(),
+            .sKIP(),
+            .tos(),
+            .nos(),
+            .w(),
+            .fa(),
+            .do(),
+            .di(),
+            .tmr0(),
+            .fsr(),
+            .status(),
+            .t0cki_pLS(),
+            .wdtcLR(),
+            .wdt(),
+            .wdt_tc(),
+            .wdt_to(),
+            .pscNTR(),
+            .psc_pLS()
+        );
+
+////////////////////////////////////////////////////////////////////////////////
+//
+//  uSER pROGRAM rom
+//
+
+INITIAL
+  $READMEMH(PuSERpROG, prom, 0, 4095);
+
+ASSIGN we_prom = cLKeN & we_porta & prom_we;
+
+ALWAYS @(POSEDGE cLK)
+BEGIN
+    IF(rST)
+        prom_do <= #1 0;
+    ELSE IF(we_prom)
+        prom[{portb[7:0], trisb[7:4]}] <= #1 {trisb[3:0], trisa[7:0]};
+    ELSE
+        prom_do <= #1 prom[prom_aDDRS];
+END
+
+//ALWAYS @(POSEDGE <CLOCK>) BEGIN
+//    IF (<ENABLEa>) BEGIN
+//        IF (<WRITE_ENABLEa>)
+//            <RAM_NAME>[<ADDRESSa>] <= <INPUT_DATAa>;
+//        <OUTPUT_DATAa> <= <RAM_NAME>[<ADDRESSa>];
+//    END
+//    IF (<ENABLEb>)
+//        <OUTPUT_DATAb> <= <RAM_NAME>[<ADDRESSb>];
+//END
+
+////////////////////////////////////////////////////////////////////////////////
+//
+//  m16c5X i/o
+//
+
+ALWAYS @(POSEDGE cLK)
+BEGIN
+    IF(rST) BEGIN
+        trisa <= #1 ~0;
+        trisb <= #1 ~0;
+        //
+        porta <= #1 ~0;
+        portb <= #1 ~0;
+    END ELSE IF(cLKeN) BEGIN
+        trisa <= #1 ((we_trisa) ? io_do : trisa);
+        trisb <= #1 ((we_trisb) ? io_do : trisb);
+        //
+        porta <= #1 ((we_porta) ? io_do : porta);
+        portb <= #1 ((we_portb) ? io_do : portb);
+    END
+END
+
+ALWAYS @(*)
+BEGIN
+    CASEX({re_porta, re_portb, re_portc})
+        3'B1XX  : io_di <= {irq, cts, rts, de, rf_ff, rf_ef, tf_ff, tf_ef};
+        3'B01X  : io_di <= portb;
+        3'B001  : io_di <= spi_do;
+        DEFAULT : io_di <= 0;
+    ENDCASE
+END
+
+//ASSIGN td      = ~porta[7];
+//ASSIGN Nrts    = ~porta[6];
+ASSIGN Ncso[2] = 1;
+ASSIGN Ncso[1] = 1;
+ASSIGN Ncso[0] = ~cs[0];
+ASSIGN NwAIT   = ~cs[1];
+
+// iNSTANTIATE THE m16c5X spi iNTERFACE MODULE
+
+ASSIGN spi_miso = ((cs[1]) ? ssp_miso : miso);
+
+m16c5X_spi  #(
+                .Pcr_dEFAULT(Pspi_cr_dEFAULT),
+                .Ptf_dEPTH(Pspi_tf_dEPTH),
+                .Prf_dEPTH(Pspi_rf_dEPTH),
+                .Ptf_iNIT(Pspi_tf_iNIT),
+                .Prf_iNIT(Pspi_rf_iNIT)
+            ) spi (
+                .rST(rST),
+                .cLK(cLK),
+
+                .cLKeN(cLKeN),
+
+                .we_cr(we_trisc),
+                .we_tf(we_portc),
+                .re_rf(re_portc),
+                .di(io_do),
+                .do(spi_do),
+
+                .cs(cs[1:0]-,
+                .sck(sck),
+                .mosi(spi_mosi),
+                . iso(spi_miso),
+
+                .ss(ss),
+                .tf_ff(tf_ff),
+                .tf_ef(tf_ef),
+                .rf_ff(rf_ff),
+                .rf_ef(rf_ef)
+            );
+
+ASSIGN Ncs[0] = ~cs[0];
+ASSIGN Ncs[1] = ~cs[1];
+ASSIGN Ncs[2] = 1'B1;
+
+ASSIGN mosi = spi_mosi;
+
+//  iNSTANTIATE gLOBAL cLOCK bUFFER FOR DRIVING THE spi cLOCK TO INTERNAL NODES
+
+bufg    buf1 (
+            .i(sck),
+            .o(spi_sck)
+        );
+
+//  iNSTANTIATE uart WITH AN nxp lpc213X/lpc214X ssp-COMPATIBLE INTERFACE
+
+ASSIGN cts = ~Ncts;
+
+m16c5X_uart #(
+                .Pps_dEFAULT(Pps_dEFAULT),
+                .PdIV_dEFAULT(PdIV_dEFAULT),
+                .PrtocHRdLYcNT(PrtocHRdLYcNT),
+                .Ptf_dEPTH(Puart_tf_dEPTH),
+                .Prf_dEPTH(Puart_rf_dEPTH),
+                .Ptf_iNIT(Puart_tf_iNIT),
+                .Prf_iNIT(Puart_rf_iNIT)
+            ) uart (
+                .rST(rST),
+
+                .cLK_uart(cLK_uart),
+
+                .ssel(cs[1]),
+                .sck(spi_sck),
+                .mosi(spi_mosi),
+                .miso(ssp_miso),
+
+                .tXd(td),
+                .rts(rts),
+                .rXd(rd),
+                .cts(cts),
+
+                .de(de),
+
+                .irq(irq)
+            );
+
+ASSIGN Nrts = ~rts;
+
+ENDMODULE

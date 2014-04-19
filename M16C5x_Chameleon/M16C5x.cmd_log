@@ -1,0 +1,1 @@
+map -ise "C:/XProjects/ISE10.1i/M16C5x/M16C5x.ise" -intstyle ise -p xc3s200a-vq100-4 -timing -logic_opt on -ol high -xe n -t 2 -register_duplication -cm balanced -detail -ignore_keep_hierarchy -pr b -r -k 4 -power off -o M16C5x_map.ncd M16C5x.ngd M16C5x.pcf
