@@ -168,3 +168,29 @@ all performed using an Arduino UNO as the base board, and powering the
 Chameleon from the UNO's +5V bus. (The UNO is being powered via its USB 
 connector.) The board functional test image is also using the 48MHz oscillator 
 for its clock.
+
+###Release 0.2
+
+Chameleon FPGA has been programmed using the M16C5x soft-core processor SoC. 
+M16C5x operating at 48 MHz (single cycle mode) and the UART is configured to 
+operate at 29.4912 MHz. Same file transfer test previously used to validate 
+the M16C5x SoC project reused, and the Chameleon successfully receives and 
+echoes the file at 921.6 kbaud. (The M16C5x SoC project requires just 33% of 
+the XC3S200A-4VQG100I FPGA used in the Chameleon prototypes. Adding a second 
+UART brings the resource utilization to 50%.)
+
+When plugged onto a Arduino UNO, there is physical interference between the 
+second serial port's I/O connector and the tope of the UNO's USB Type B 
+connector. Changed the part number of the stacking connectors to the version 
+with a greater stacking height.
+
+Using another prototyping card in place of the UNO, discovered that an error 
+in the power pin assignments on the Arduino UNO power connector: +3.3V and +5V 
+pins swapped. Corrected the symbol and applied the changes to the PCB. Changed 
+the circuit to make IOREF independent of the +5V power pin. Retained the 
+jumper to allow the Chameleon to have the IO voltage reference of its voltage 
+translated set as either IOREF or +3.3V.
+
+Also found that the SRAM used in constructing the prototypes was incorrectly 
+selected. The value used is a +5V-only device. Adjusted the schematic and BOM 
+to correct this issue, and added a second/alternate part as well.
