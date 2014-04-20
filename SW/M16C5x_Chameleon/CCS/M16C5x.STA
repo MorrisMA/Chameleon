@@ -1,0 +1,47 @@
+
+ROM used:   77/2048 (4%)
+            77/2048 (4%) including unused fragments
+
+            0.2 Average locations per line
+            1.9 Average locations per statement
+
+RAM used:   4/24 (17%) at main() level
+            4/24 (17%) worst case
+
+Stack used: 0 worst case (0 in main + 0 for interrupts)
+Stack size: 2
+
+Lines Stmts  %   Files
+----- ----- ---  -----
+   87    40 100  M16C5x.c
+    7     0   0  ..\..\..\Documents and Settings\morrisma\My Documents\MAM-Projects\1020-M16C5x\M16C5x.h
+  375     0   0  ..\..\..\Program Files\PICC\Devices\16F57.h
+----- -----
+  469    40 Total
+
+Page ROM  %  RAM   Vol Diff  Functions:
+---- --- --- ---   --- ----  ----------
+0     77 100    0   934  7.3  main
+ Inline         0             @cinit1
+
+Program metrics:
+    Functions               1
+    Statements              40
+    Comments                56
+    Volume (V)              937
+    Difficulty (D)          7.1
+    Effort to implement (E) 6683
+    Time to implement (T)   6 minutes
+    Est Delivered Bugs (B)  0
+    Cyclomatic Complexity   4
+    Maintainability (MI)    33
+
+ Segment     Used  Free
+-----------  ----  ----
+00000-001FF    77  434  
+00200-003FF     0  512  
+00400-005FF     0  512  
+00600-007FF     0  512  
+
+
+

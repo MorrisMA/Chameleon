@@ -1,0 +1,194 @@
+CCS PCB C Compiler, Version 5.006, 9513               20-Apr-14 10:47
+
+               Filename:   C:\MAM\M16C5x\CCS\M16C5x.lst
+
+               ROM used:   77 words (4%)
+                           Largest free fragment is 512
+               RAM used:   4 (17%) at main() level
+                           4 (17%) worst case
+               Stack used: 0 locations
+               Stack size: 2
+
+*
+0000:  GOTO   001
+*
+07FF:  GOTO   000
+.................... #include <M16C5x.h> 
+.................... #include <16F57.h> 
+.................... //////// Standard Header file for the PIC16F57 device //////////////// 
+.................... #device PIC16F57 
+....................  
+.................... #list 
+....................  
+....................  
+.................... #FUSES NOWDT                 	//No Watch Dog Timer 
+....................  
+.................... #use delay(crystal=20000000) 
+....................  
+....................  
+....................  
+.................... #byte PortA = 5 
+.................... #byte PortB = 6 
+.................... #byte PortC = 7 
+....................  
+.................... #byte SPI_CR    = 10 
+.................... #byte SPI_SR    = 11 
+.................... #byte SPI_DIO_H = 12 
+.................... #byte SPI_DIO_L = 13 
+.................... #byte Dly_Cntr  = 15 
+....................  
+.................... #bit  SPI_CR_REn   = 10.0 
+.................... #bit  SPI_CR_SSel  = 10.1 
+.................... #bit  SPI_CR_MD0   = 10.2 
+.................... #bit  SPI_CR_MD1   = 10.3 
+.................... #bit  SPI_CR_BR0   = 10.4 
+.................... #bit  SPI_CR_BR1   = 10.5 
+.................... #bit  SPI_CR_BR2   = 10.6 
+.................... #bit  SPI_CR_DIR   = 10.7 
+....................  
+.................... #bit  SPI_SR_TF_EF = 5.0 
+.................... #bit  SPI_SR_TF_FF = 5.1 
+.................... #bit  SPI_SR_RF_EF = 5.2 
+.................... #bit  SPI_SR_RF_FF = 5.3 
+....................  
+.................... #bit  SPI_DIO_RRdy = 12.2 
+.................... #bit  SPI_DIO_RErr = 12.0 
+....................  
+.................... #bit  RD_Ext_ASCII = 13.7 
+....................  
+.................... #use fast_io(ALL) 
+....................  
+.................... void main() 
+.................... { 
+....................     set_tris_A(0xFF); 
+*
+0001:  MOVLW  FF
+0002:  TRIS   5
+....................     set_tris_B(0xFF); 
+0003:  TRIS   6
+....................      
+....................     set_tris_C(0x1E); 
+0004:  MOVLW  1E
+0005:  TRIS   7
+....................     SPI_CR = 0x1E; 
+0006:  MOVWF  0A
+....................  
+....................     Dly_Cntr = 8; 
+0007:  MOVLW  08
+0008:  MOVWF  0F
+....................     while(--Dly_Cntr > 0); 
+0009:  DECFSZ 0F,F
+000A:  GOTO   009
+....................      
+....................     PortC = 0x13; 
+000B:  MOVLW  13
+000C:  MOVWF  07
+....................     PortC = 0x00; 
+000D:  CLRF   07
+....................     PortC = 0x30; 
+000E:  MOVLW  30
+000F:  MOVWF  07
+....................     PortC = 0x01; 
+0010:  MOVLW  01
+0011:  MOVWF  07
+....................      
+....................     while(~SPI_SR_TF_EF);    
+0012:  BTFSS  05.0
+0013:  GOTO   012
+....................      
+....................     while(TRUE) { 
+....................         // Read UART Receive FIFO 
+....................                  
+....................         SPI_CR_REn = 1;  
+0014:  BSF    0A.0
+....................         set_tris_C(SPI_CR); 
+0015:  MOVF   0A,W
+0016:  TRIS   7
+....................          
+....................         do { 
+....................             PortC = 0x60; PortC = 0xFF; 
+0017:  MOVLW  60
+0018:  MOVWF  07
+0019:  MOVLW  FF
+001A:  MOVWF  07
+....................              
+....................             while(~SPI_SR_TF_EF); SPI_DIO_H = PortC; 
+001B:  BTFSS  05.0
+001C:  GOTO   01B
+001D:  MOVF   07,W
+001E:  MOVWF  0C
+....................             while( SPI_SR_RF_EF); SPI_DIO_L = PortC; 
+001F:  BTFSC  05.2
+0020:  GOTO   01F
+0021:  MOVF   07,W
+0022:  MOVWF  0D
+....................              
+....................         } while(~SPI_DIO_RRdy || SPI_DIO_RErr); 
+0023:  BTFSS  0C.2
+0024:  GOTO   017
+0025:  BTFSC  0C.0
+0026:  GOTO   017
+....................          
+....................         // Process received data - lc to uc and uc to lc, otherwise unchanged 
+....................          
+....................         if(~RD_Ext_ASCII) {     // if Extended ASCII data, skip conversion 
+0027:  BTFSC  0D.7
+0028:  GOTO   043
+....................             if((SPI_DIO_L >= 'A') && (SPI_DIO_L <= 'z')) { 
+0029:  MOVLW  40
+002A:  MOVWF  08
+002B:  MOVF   0D,W
+002C:  SUBWF  08,W
+002D:  BTFSC  03.0
+002E:  GOTO   043
+002F:  MOVLW  7A
+0030:  MOVWF  08
+0031:  MOVF   0D,W
+0032:  SUBWF  08,W
+0033:  BTFSS  03.0
+0034:  GOTO   043
+....................                 if((SPI_DIO_L <= 'Z') || (SPI_DIO_L >= 'a')) { 
+0035:  MOVLW  5A
+0036:  MOVWF  08
+0037:  MOVF   0D,W
+0038:  SUBWF  08,W
+0039:  BTFSC  03.0
+003A:  GOTO   041
+003B:  MOVLW  60
+003C:  MOVWF  08
+003D:  MOVF   0D,W
+003E:  SUBWF  08,W
+003F:  BTFSC  03.0
+0040:  GOTO   043
+....................                     SPI_DIO_L ^= 0x20; 
+0041:  MOVLW  20
+0042:  XORWF  0D,F
+....................                 } 
+....................             } 
+....................         } 
+....................          
+....................         // Write processed data to UART transmit FIFO 
+....................  
+....................         SPI_CR_REn = 0; 
+0043:  BCF    0A.0
+....................         set_tris_C(SPI_CR); 
+0044:  MOVF   0A,W
+0045:  TRIS   7
+....................          
+....................         PortC = 0x50; PortC = SPI_DIO_L;    // Transmit processed data 
+0046:  MOVLW  50
+0047:  MOVWF  07
+0048:  MOVF   0D,W
+0049:  MOVWF  07
+....................          
+....................         while(~SPI_SR_TF_EF); 
+004A:  BTFSS  05.0
+004B:  GOTO   04A
+004C:  GOTO   014
+....................     } 
+....................  
+.................... } 
+004D:  SLEEP
+
+Configuration Fuses:
+   Word  1: 0FFA   HS NOWDT NOPROTECT

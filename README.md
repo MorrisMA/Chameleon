@@ -194,3 +194,19 @@ translated set as either IOREF or +3.3V.
 Also found that the SRAM used in constructing the prototypes was incorrectly 
 selected. The value used is a +5V-only device. Adjusted the schematic and BOM 
 to correct this issue, and added a second/alternate part as well.
+
+###Release 0.3
+
+Converted the MPLAB-compatible test program, M16C5x_Tst4.asm, into a CCS-
+compatible C program, M16C5x.c and M16C5x.h. The resulting programs provides 
+the same performance as the assembly language test program, and only requires 
+an additional 10 program memory words: 0x4D (CCS) versus 0x44 (MPLAB).
+
+The differences can all be accounted for in the runtime of the CCS C compiler. 
+First, an extra jump at location 0 and a SLEEP instruction at the end on the 
+program are added by CCS. Second, the range comparisons used to isolate the 
+ASCII characters to be converted from lower case to upper case and vice-versa 
+use two additional instructions and one register temporary to perform the 
+difference operations; a total of eight additional operations are required to 
+use the temporary register. Otherwise, there is almost a one to one mapping of 
+the C source to the previously developed assembly language test program.

@@ -1,0 +1,60 @@
+[PROJECT]
+Target=M16C5x.hex
+Processor_Text=PIC16F57
+CCSVerions=5.006
+Compiler=PCB
+CCSVersion=5.006
+Development_Mode=
+ToolSuite=CCS
+[Target Data]
+FileList=M16C5x.c
+BuildTool=C-COMPILER
+OptionString=+FB
+AdditionalOptionString=
+BuildRequired=1
+[Directories]
+Include=C:\Program Files\PICC\Devices\;C:\Program Files\PICC\Drivers\;C:\Documents and Settings\morrisma\My Documents\MAM-Projects\1020-M16C5x\
+Library=
+LinkerScript=
+[C:\Documents and Settings\morrisma\My Documents\MAM-Projects\1020-M16C5x\M16C5x]
+Type=4
+[mru-list]
+1=M16C5x.c
+[Opened Files]
+1=M16C5x.c
+2=M16C5x.lst
+3=
+4=
+[M16C5x.c]
+Type=4
+Path=
+FileList=
+BuildTool=
+OptionString=
+AdditionalOptionString=
+[defines]
+enabled=0
+chip=1
+D1=
+V1=
+[fileformats]
+forcecoff=1
+debug=4
+error=2
+object=0
+list=0
+scratch=0
+sta=1
+tre=1
+allerrors=1
+allwarnings=1
+stayupne=3
+stayupoe=0
+[Windows]
+0=0000 %S 0 0 796 451 3 0
+[documentation]
+template=C:\Program Files\PICC\template_sdd.rtf
+output=M16C5x.rtf
+[Units]
+Count=1
+1=M16C5x (main)

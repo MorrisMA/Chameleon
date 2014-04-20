@@ -1,0 +1,65 @@
+005.0   SPI_SR_TF_EF
+005     PortA
+005.1   SPI_SR_TF_FF
+005.2   SPI_SR_RF_EF
+005.3   SPI_SR_RF_FF
+006     PortB
+007     PortC
+008     @SCRATCH
+009     @SCRATCH
+009     _RETURN_
+00A     @SCRATCH
+00A.0   SPI_CR_REn
+00A     SPI_CR
+00A.1   SPI_CR_SSel
+00A.2   SPI_CR_MD0
+00A.3   SPI_CR_MD1
+00A.4   SPI_CR_BR0
+00A.5   SPI_CR_BR1
+00A.6   SPI_CR_BR2
+00A.7   SPI_CR_DIR
+00B     @SCRATCH
+00B     SPI_SR
+00C.0   SPI_DIO_RErr
+00C     SPI_DIO_H
+00C.2   SPI_DIO_RRdy
+00D     SPI_DIO_L
+00D.7   RD_Ext_ASCII
+00F     Dly_Cntr
+
+ROM Allocation:
+000001  main
+000001  @cinit1
+000001  @cinit2
+
+Project Directory:
+    C:\MAM\M16C5x\CCS\
+
+Project Files:
+    M16C5x.c                                                [20-Apr-14 10:47  CRC=72E2268B]
+    ..\..\..\Documents and Settings\morrisma\My Documents\MAM-Projects\1020-M16C5x\M16C5x.h [15-Apr-14 20:23  CRC=00000000]
+    ..\..\..\Program Files\PICC\Devices\16F57.h             [06-Jun-13 16:04  CRC=22E8FF8A]
+
+Source signature=B8B4259F
+
+Units:
+    M16C5x (main)
+
+Compiler Settings:
+    Processor:      PIC16F57
+    Pointer Size:   5
+    Opt Level:      9
+    Short,Int,Long: UNSIGNED: 1,8,16
+    Float,Double:   32,32
+
+Output Files:
+    XREF file:   M16C5x.xsym
+    Errors:      M16C5x.err
+    Ext Symbols: M16C5x.esym
+    INHX8:       M16C5x.hex
+    Symbols:     M16C5x.sym
+    List:        M16C5x.lst
+    Debug/COFF:  M16C5x.cof
+    Project:     M16C5x.ccspjt
+    Call Tree:   M16C5x.tre
+    Statistics:  M16C5x.STA

@@ -1,0 +1,249 @@
+---  C:\MAM\M16C5x\MPLAB\M16C5x_Tst4.asm  --------------------------------------------------------
+                                                  1:     ;*******************************************************************************
+                                                  2:     ; M16C5x_Tst4.ASM
+                                                  3:     ;
+                                                  4:     ;
+                                                  5:     ;   This program tests the receive function of the SSP UART.
+                                                  6:     ;
+                                                  7:     ;   The UART is polled to determine if there is a Rx character available. If a 
+                                                  8:     ;   Rx character is available, the character is read from the UART RHR (Rx FIFO)
+                                                  9:     ;   into a temporary location in the register file. The received character is
+                                                  10:    ;   checked for upper/lower case. If it is an upper case character, the charac-
+                                                  11:    ;   ter is converted to lower case. If it is a lower case character, the charac-
+                                                  12:    ;   ter is converter to upper case. After conversion, the character is sent to
+                                                  13:    ;   the UART's Tx FIFO.
+                                                  14:    ;
+                                                  15:    ;*******************************************************************************
+                                                  16:    
+                                                  17:            LIST P=16F57, R=DEC
+                                                  18:    
+                                                  19:    ;-------------------------------------------------------------------------------
+                                                  20:    ;   Set ScratchPadRam here.  If you are using a PIC16C5X device, use: 
+                                                  21:    ;ScratchPadRam EQU     0x10
+                                                  22:    ;   Otherwise, use:
+                                                  23:    ;ScratchPadRam EQU     0x20
+                                                  24:    ;-------------------------------------------------------------------------------
+                                                  25:    
+                                                  26:    ScratchPadRAM   EQU     0x10
+                                                  27:    
+                                                  28:    ;-------------------------------------------------------------------------------
+                                                  29:    ; Variables
+                                                  30:    ;-------------------------------------------------------------------------------
+                                                  31:    
+                                                  32:    INDF			EQU		0			; Indirect Register File Access Location
+                                                  33:    Tmr0			EQU		1			; Timer 0
+                                                  34:    PCL				EQU		2			; Low Byte Program Counter
+                                                  35:    Status			EQU		3			; Processor Status Register
+                                                  36:    FSR				EQU		4			; File Select Register
+                                                  37:    PortA			EQU		5			; I/O Port A Address
+                                                  38:    PortB			EQU		6			; I/O Port B Address
+                                                  39:    PortC			EQU		7			; I/O Port C Address
+                                                  40:    
+                                                  41:    SPI_CR          EQU     0x0A        ; SPI Control Register Shadow/Working Copy
+                                                  42:    SPI_SR          EQU     0x0B        ; SPI Status Register Shadow/Working Copy
+                                                  43:    SPI_DIO_H       EQU     0x0C        ; 1st byte To/From from SPI Rcv FIFO
+                                                  44:    SPI_DIO_L       EQU     0x0D        ; 2nd byte To/From from SPI Rcv FIFO
+                                                  45:    
+                                                  46:    DlyCntr         EQU     0x0F        ; General Purpose Delay Counter Register
+                                                  47:    
+                                                  48:    ;-------------------------------------------------------------------------------
+                                                  49:    ; SPI Control Register Bit Map (M16C5x TRIS C register)
+                                                  50:    ;-------------------------------------------------------------------------------
+                                                  51:    
+                                                  52:    SPI_CR_REn      EQU     0           ; Enable MISO Data Capture
+                                                  53:    SPI_CR_SSel     EQU     1           ; Slv Select: 0 - Ext SEEPROM, 1 - SSP_UART
+                                                  54:    SPI_CR_MD0      EQU     2           ; SPI Md[1:0]: UART    - Mode 0 or Mode 3
+                                                  55:    SPI_CR_MD1      EQU     3           ;              SEEPROM - Mode 0 or Mode 3
+                                                  56:    SPI_CR_BR0      EQU     4           ; SPI Baud Rate: 0 - Clk/2, ... Clk/128
+                                                  57:    SPI_CR_BR1      EQU     5           ; Default: 110 - Clk/64
+                                                  58:    SPI_CR_BR2      EQU     6           ; Clk/2 29.4912 MHz
+                                                  59:    SPI_CR_DIR      EQU     7           ; SPI Shift Direction: 0 - MSB, 1 - LSB
+                                                  60:    
+                                                  61:    ;-------------------------------------------------------------------------------
+                                                  62:    ; SPI Status Register Bit Map (M16C5x Port A input)
+                                                  63:    ;-------------------------------------------------------------------------------
+                                                  64:    
+                                                  65:    SPI_SR_TF_EF    EQU     0           ; SPI TF Empty Flag (All Data Transmitted)
+                                                  66:    SPI_SR_TF_FF    EQU     1           ; SPI TF Full Flag  (Possible Overrun Error)
+                                                  67:    SPI_SR_RF_EF    EQU     2           ; SPI RF Empty Flag (Data Available)
+                                                  68:    SPI_SR_RF_FF    EQU     3           ; SPI RF Full Flag  (Possible Overrun Error)
+                                                  69:    SPI_SR_DE       EQU     4           ; SSP UART RS-485 Drive Enable
+                                                  70:    SPI_SR_RTS      EQU     5           ; SSP UART Request-To-Send Modem Control Out
+                                                  71:    SPI_SR_CTS      EQU     6           ; SSP UART Clear-To-Send Modem Control Input
+                                                  72:    SPI_SR_IRQ      EQU     7           ; SSP UART Interrupt Request Output
+                                                  73:    
+                                                  74:    ;-------------------------------------------------------------------------------
+                                                  75:    ; SSP UART Control Register (RA = 000) (16-bits Total) (Read-Write)
+                                                  76:    ;-------------------------------------------------------------------------------
+                                                  77:    
+                                                  78:    UART_CR_RA      EQU     3           ; Bits 7:5 SPI_DIO_H
+                                                  79:    UART_CR_WnR     EQU     1           ; Bit    4 SPI_DIO_H, if Set Wr, else Rd
+                                                  80:    UART_CR_MD      EQU     2           ; Bits 3:2 SPI_DIO_H, UART Mode: 232/485
+                                                  81:    UART_CR_RTSo    EQU     1           ; Bit    1 SPI_DIO_H, Request-To-Send Output
+                                                  82:    UART_CR_IE      EQU     1           ; Bit    0 SPI_DIO_H, Interrupt Enable
+                                                  83:    UART_CR_FMT     EQU     4           ; Bits 7:4 SPI_DIO_L, Serial Frame Format
+                                                  84:    UART_CR_BAUD    EQU     4           ; Bits 3:0 SPI_DIO_L, Serial Baud Rate
+                                                  85:    
+                                                  86:    ;-------------------------------------------------------------------------------
+                                                  87:    ; SSP UART Status Register (RA = 001) (16-bits Total) (Read-Only)
+                                                  88:    ;-------------------------------------------------------------------------------
+                                                  89:    
+                                                  90:    UART_SR_RA      EQU     3           ; Bits 7:5 SPI_DIO_H
+                                                  91:    UART_SR_WnR     EQU     1           ; Bit    4 SPI_DIO_H, Ignored if Set
+                                                  92:    UART_SR_MD      EQU     2           ; Bits 3:2 SPI_DIO_H, UART Mode
+                                                  93:    UART_SR_RTSi    EQU     1           ; Bit    1 SPI_DIO_H, RTS signal level
+                                                  94:    UART_SR_CTSi    EQU     1           ; Bit    0 SPI_DIO_H, CTS signal level
+                                                  95:    UART_SR_RS      EQU     2           ; Bits 7:6 SPI_DIO_L, Rx FIFO State
+                                                  96:    UART_SR_TS      EQU     2           ; Bits 5:4 SPI_DIO_L, Tx FIFO State
+                                                  97:    UART_SR_iRTO    EQU     1           ; Bit    3 SPI_DIO_L, Rcv Timeout Interrupt
+                                                  98:    UART_SR_iRDA    EQU     1           ; Bit    2 SPI_DIO_L, Rcv Data Available
+                                                  99:    UART_SR_iTHE    EQU     1           ; Bit    1 SPI_DIO_L, Tx FIFO Half Empty
+                                                  100:   UART_SR_iTFE    EQU     1           ; Bit    0 SPI_DIO_L, Tx FIFO Empty
+                                                  101:   
+                                                  102:   ;-------------------------------------------------------------------------------
+                                                  103:   ; SSP UART Baud Rate Register (RA = 001) (16-bits Total) (Write-Only)
+                                                  104:   ;-------------------------------------------------------------------------------
+                                                  105:   
+                                                  106:   UART_BR_PS      EQU     4           ; Bits 11:8 : Baud rate prescaler - (M - 1)
+                                                  107:   UART_BR_Div     EQU     8           ; Bits  7:0 : Baud rate divider   - (N - 1)
+                                                  108:   
+                                                  109:   ;-------------------------------------------------------------------------------
+                                                  110:   ; SSP UART Transmit Data Register (RA = 010) (16-bits Total) (Write-Only)
+                                                  111:   ;-------------------------------------------------------------------------------
+                                                  112:   
+                                                  113:   UART_TD_RA      EQU     3           ; Bits 7:5 SPI_DIO_H
+                                                  114:   UART_TD_WnR     EQU     1           ; Bit    4 SPI_DIO_H, Ignored if Not Set
+                                                  115:   UART_TD_TFC     EQU     1           ; Bit    3 SPI_DIO_H, Transmit FIFO Clr/Rst
+                                                  116:   UART_TD_RFC     EQU     1           ; Bit    2 SPI_DIO_H, Receive FIFO Clr/Rst
+                                                  117:   UART_TD_HLD     EQU     1           ; Bit    1 SPI_DIO_H, Tx delayed if Set
+                                                  118:   UART_TD_Rsvd    EQU     1           ; Bit    0 SPI_DIO_H, Reserved
+                                                  119:   UART_TD_DO      EQU     8           ; Bits 7:0 SPI_DIO_L, Tx Data: 7 or 8 bits
+                                                  120:   
+                                                  121:   ;-------------------------------------------------------------------------------
+                                                  122:   ; SSP UART Recieve Data Register (RA = 011) (16-bits Total) (Read-Only)
+                                                  123:   ;-------------------------------------------------------------------------------
+                                                  124:   
+                                                  125:   UART_RD_RA      EQU     3           ; Bits 7:5 SPI_DIO_H
+                                                  126:   UART_RD_WnR     EQU     1           ; Bit    4 SPI_DIO_H, Ignored if Set
+                                                  127:   UART_RD_TRDY    EQU     1           ; Bit    3 SPI_DIO_H, Transmit Ready
+                                                  128:   UART_RD_RRDY    EQU     1           ; Bit    2 SPI_DIO_H, Receive Ready
+                                                  129:   UART_RD_RTO     EQU     1           ; Bit    1 SPI_DIO_H, Receive Time Out Det.
+                                                  130:   UART_RD_RERR    EQU     1           ; Bit    0 SPI_DIO_H, Receive Error Detect
+                                                  131:   UART_RD_DI      EQU     8           ; Bits 7:0 SPI_DIO_L, Rx Data: 7 or 8 bits
+                                                  132:   
+                                                  133:   ;-------------------------------------------------------------------------------
+                                                  134:   ; Set Reset/WDT Vector
+                                                  135:   ;-------------------------------------------------------------------------------
+                                                  136:   
+                                                  137:                   ORG     0x7FF
+                                                  138:          
+   7FF     A00     GOTO 0                         139:                   GOTO    Start
+                                                  140:   
+                                                  141:   ;-------------------------------------------------------------------------------
+                                                  142:   ; Main Program
+                                                  143:   ;-------------------------------------------------------------------------------
+                                                  144:   
+                                                  145:                   ORG     0x000
+                                                  146:   
+                                                  147:   ;-------------------------------------------------------------------------------
+                                                  148:   
+   000     CFF     MOVLW 0xff                     149:   Start           MOVLW   0xFF            ; Initialize TRIS A and TRIS B to all 1s
+   001     005     TRIS 0x5                       150:                   TRIS    5
+   002     006     TRIS 0x6                       151:                   TRIS    6
+                                                  152:                   
+   003     C1E     MOVLW 0x1e                     153:                   MOVLW   0x1E            ; Load W with SPI CR Initial Value
+   004     02A     MOVWF 0xa                      154:                   MOVWF   SPI_CR          ; Save copy of value
+   005     007     TRIS 0x7                       155:                   TRIS    7               ; Initialize SPI CR
+                                                  156:                   
+   006     C08     MOVLW 0x8                      157:                   MOVLW   0x08            ; Delay before using SPI I/F
+   007     02F     MOVWF 0xf                      158:                   MOVWF   DlyCntr
+   008     2EF     DECFSZ 0xf, F                  159:   SPI_Init_Dly    DECFSZ  DlyCntr,1
+   009     A08     GOTO 0x8                       160:                   GOTO    SPI_Init_Dly
+                                                  161:                   
+   00A     C13     MOVLW 0x13                     162:                   MOVLW   0x13            ; UART CR (Hi): RS232 2-wire, RTS, IE
+   00B     027     MOVWF 0x7                      163:                   MOVWF   PortC           ; Output to SPI and to UART
+   00C     C00     MOVLW 0                        164:                   MOVLW   0x00            ; UART CR (Lo) Set 8N1
+   00D     027     MOVWF 0x7                      165:                   MOVWF   PortC
+                                                  166:   
+   00E     C30     MOVLW 0x30                     167:                   MOVLW   0x30            ; UART BRR (Hi) PS[3:0]
+   00F     027     MOVWF 0x7                      168:                   MOVWF   PortC           ; Output to SPI and to UART
+   010     C01     MOVLW 0x1                      169:                   MOVLW   0x01            ; UART BRR (Lo) Div[7:0] (921.6k baud)
+   011     027     MOVWF 0x7                      170:                   MOVWF   PortC
+                                                  171:   
+   012     705     BTFSS 0x5, 0                   172:   WaitLp1         BTFSS   PortA,SPI_SR_TF_EF ; Wait for UART UCR, BRR output
+   013     A12     GOTO 0x12                      173:                   GOTO    WaitLp1
+                                                  174:   
+                                                  175:   ;-------------------------------------------------------------------------------
+                                                  176:   
+   014     50A     BSF 0xa, 0                     177:   Rd_UART_RF      BSF     SPI_CR,SPI_CR_REn  ; Enable SPI IF Capture MISO data
+                                                  178:                   
+   015     20A     MOVF 0xa, W                    179:                   MOVF    SPI_CR,0        ; Load SPI CR Shadow
+   016     007     TRIS 0x7                       180:                   TRIS    7               ; Enable SPI I/F Receive Function   
+                                                  181:   
+   017     C60     MOVLW 0x60                     182:   Poll_UART_RF    MOVLW   0x60            ; UART RF (Hi) RA = 3, WnR = 0
+   018     027     MOVWF 0x7                      183:                   MOVWF   PortC           ; Output to SPI and to UART
+   019     CFF     MOVLW 0xff                     184:                   MOVLW   0xFF            ; UART RD (Lo) 0xFF = "Del" or 0x00 (Nul)
+   01A     027     MOVWF 0x7                      185:                   MOVWF   PortC           ; Output to SPI and to UART
+                                                  186:   
+   01B     705     BTFSS 0x5, 0                   187:   WaitLp2         BTFSS   PortA,SPI_SR_TF_EF ; Wait for SPI TF to be empty
+   01C     A1B     GOTO 0x1b                      188:                   GOTO    WaitLp2
+                                                  189:                   
+   01D     207     MOVF 0x7, W                    190:                   MOVF    PortC,0         ; Read SPI Receive FIFO
+   01E     02C     MOVWF 0xc                      191:                   MOVWF   SPI_DIO_H       ; Store UART SR (hi byte)
+                                                  192:                   
+   01F     645     BTFSC 0x5, 0x2                 193:   WaitLp3         BTFSC   PortA,SPI_SR_RF_EF ; Wait for UART Return Data (Hi)
+   020     A1F     GOTO 0x1f                      194:                   GOTO    WaitLp3
+                                                  195:                   
+   021     207     MOVF 0x7, W                    196:                   MOVF    PortC,0         ; Read SPI Receive FIFO
+   022     02D     MOVWF 0xd                      197:                   MOVWF   SPI_DIO_L       ; Store UART SR (hi byte)
+                                                  198:   
+                                                  199:   ;-------------------------------------------------------------------------------
+                                                  200:   
+   023     74C     BTFSS 0xc, 0x2                 201:   Test_RD         BTFSS   SPI_DIO_H,2     ; Test RRDY bit, if Set, process RD
+   024     A17     GOTO 0x17                      202:                   GOTO    Poll_UART_RF    ; Loop until character received
+   025     60C     BTFSC 0xc, 0                   203:                   BTFSC   SPI_DIO_H,0     ; Test RD for error; if Set, discard
+   026     A17     GOTO 0x17                      204:                   GOTO    Poll_UART_RF    ; Loop until error-free character rcvd
+                                                  205:    
+                                                  206:   ;-------------------------------------------------------------------------------
+                                                  207:   				
+   027     6ED     BTFSC 0xd, 0x7                 208:   Tst_ExtASCII    BTFSC   SPI_DIO_L,7     ; Ignore Extended ASCII characters
+   028     A3B     GOTO 0x3b                      209:                   GOTO    Wr_UART_TF      ; Transmit Extended ASCII as is
+                                                  210:   
+   029     C7B     MOVLW 0x7b                     211:   Tst_LowerCase   MOVLW   0x7B            ; Test against 'z' + 1
+   02A     08D     SUBWF 0xd, W                   212:                   SUBWF   SPI_DIO_L,0     ; Compare RD against 'z'
+   02B     603     BTFSC 0x3, 0                   213:                   BTFSC   Status,0        ; If Status.C, RD > 'z' 
+   02C     A3B     GOTO 0x3b                      214:   GT_LowerCase    GOTO    Wr_UART_TF      ; not upper or lower case, send data
+   02D     C61     MOVLW 0x61                     215:                   MOVLW   0x61            ; Load 'a'
+   02E     08D     SUBWF 0xd, W                   216:                   SUBWF   SPI_DIO_L,0     ; Compare RD against 'a'
+   02F     603     BTFSC 0x3, 0                   217:                   BTFSC   Status,0        ; Carry Set if RD >= 'a'
+   030     A39     GOTO 0x39                      218:   Is_LowerCase    GOTO    ChangeCase      ; Is upper case,  change case to lower
+                                                  219:   
+   031     C5B     MOVLW 0x5b                     220:   Tst_UpperCase   MOVLW   0x5B            ; Test against 'Z' + 1
+   032     08D     SUBWF 0xd, W                   221:                   SUBWF   SPI_DIO_L,0     ; Compare RD against 'Z'
+   033     603     BTFSC 0x3, 0                   222:                   BTFSC   Status,0        ; Carry set if Rd > 'Z'
+   034     A3B     GOTO 0x3b                      223:   Not_UpperLower  GOTO    Wr_UART_TF      ; Not lower case
+   035     C41     MOVLW 0x41                     224:                   MOVLW   0x41            ; Load 'A'
+   036     08D     SUBWF 0xd, W                   225:                   SUBWF   SPI_DIO_L,0     ; Compare against 'A'
+   037     703     BTFSS 0x3, 0                   226:                   BTFSS   Status,0        ; Carry set if RD >= 'A'
+   038     A3B     GOTO 0x3b                      227:   LT_UpperCase    GOTO    Wr_UART_TF      ; Tests complete, send data
+                                                  228:   
+                                                  229:   Is_UpperCase
+   039     C20     MOVLW 0x20                     230:   ChangeCase      MOVLW   0x20            ; Change case: LC to UC, or UC to LC
+   03A     1AD     XORWF 0xd, F                   231:                   XORWF   SPI_DIO_L,1
+                                                  232:   
+                                                  233:   ;-------------------------------------------------------------------------------
+                                                  234:   
+   03B     40A     BCF 0xa, 0                     235:   Wr_UART_TF      BCF     SPI_CR,SPI_CR_REn  ; Disable SPI IF Capture MISO data
+                                                  236:                   
+   03C     20A     MOVF 0xa, W                    237:                   MOVF    SPI_CR,0        ; Load SPI CR Shadow
+   03D     007     TRIS 0x7                       238:                   TRIS    7               ; Enable SPI I/F Receive Function   
+                                                  239:   
+   03E     C50     MOVLW 0x50                     240:                   MOVLW   0x50            ; UART TF (Hi) RA = 2, WnR = 1
+   03F     027     MOVWF 0x7                      241:                   MOVWF   PortC           ; Output to SPI and to UART
+   040     20D     MOVF 0xd, W                    242:                   MOVF    SPI_DIO_L,0     ; Read data to transmit
+   041     027     MOVWF 0x7                      243:                   MOVWF   PortC           ; Output to SPI TF and to UART
+                                                  244:   
+   042     705     BTFSS 0x5, 0                   245:   WaitLp4         BTFSS   PortA,SPI_SR_TF_EF ; Wait for SPI TF to be empty
+   043     A42     GOTO 0x42                      246:                   GOTO    WaitLp4
+                                                  247:   
+   044     A14     GOTO 0x14                      248:                   GOTO    Rd_UART_RF      ; Loop Forever, send 0x55 continously
