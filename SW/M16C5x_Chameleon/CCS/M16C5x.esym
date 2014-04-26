@@ -1,7 +1,8 @@
-D G "__PCB__" 0 88 ""5.006""
-D G "__DEVICE__" 0 88 "57"
-D G "__DATE__" 0 88 ""20-Apr-14""
-D G "__TIME__" 0 88 ""10:47:00"" "Standard Header file for the PIC16F57 device ////////////////"
+D G "Port1" 0 33 "0x80"
+D G "__PCB__" 0 110 ""5.006""
+D G "__DEVICE__" 0 110 "57"
+D G "__DATE__" 0 110 ""25-Apr-14""
+D G "__TIME__" 0 110 ""19:08:39"" "Standard Header file for the PIC16F57 device ////////////////"
 c L "set_tris_a" 2 5 10 "FUNCTION"
 v L "value" 2 25 "int8" `35 
 f B "set_tris_a" 2 25 "void(int8 value)" `34 
@@ -511,12 +512,18 @@ v L "address" 2 370 "int16" `462
 f B "goto_address" 2 370 "void(int16 address)" `461 
 v L "label" 2 371 "int16" `464 
 f B "label_address" 2 371 "int16(int16 label)" `463 
-F G "main" 0 35 "void()" `492 
-C L "main" 0 53 1 "FUNCTION"
-C L "main" 0 53 1 "FUNCTION"
-C L "main" 0 53 1 "FUNCTION"
-C L "main" 0 53 1 "FUNCTION"
-C L "main" 0 53 1 "FUNCTION"
+D G "COM0" 0 32 "0x00"
+D G "COM1" 0 33 "0x80"
+V L "port" 0 37 "int8" `493 
+F G "set_baud" 0 38 "void(int8 port)" `492 
+V L "port" 0 47 "int8" `495 
+F G "get_char" 0 48 "int8(int8 port)" `494 
+V L "port" 0 61 "int8" `497 
+F G "put_char" 0 62 "void(int8 port)" `496  "Process received data - lc to uc and uc to lc, otherwise unchanged"
+C L "put_char" 0 65 1 "FUNCTION"
+C L "put_char" 0 65 1 "FUNCTION"
+C L "put_char" 0 65 1 "FUNCTION"
+F G "MAIN" 0 85 "void()" `498 
 F B "reset_cpu" 0 0
 F B "abs" 1 0
 F B "sleep" 0 0

@@ -1,16 +1,19 @@
-CCS PCB C Compiler, Version 5.006, 9513               20-Apr-14 10:47
+CCS PCB C Compiler, Version 5.006, 9513               25-Apr-14 19:08
 
                Filename:   C:\MAM\M16C5x\CCS\M16C5x.lst
 
-               ROM used:   77 words (4%)
+               ROM used:   109 words (5%)
                            Largest free fragment is 512
                RAM used:   4 (17%) at main() level
-                           4 (17%) worst case
+                           5 (21%) worst case
                Stack used: 0 locations
                Stack size: 2
 
 *
-0000:  GOTO   001
+0000:  GOTO   050
+0001:  GOTO   004
+0002:  GOTO   010
+0003:  GOTO   029
 *
 07FF:  GOTO   000
 .................... #include <M16C5x.h> 
@@ -27,142 +30,138 @@ CCS PCB C Compiler, Version 5.006, 9513               20-Apr-14 10:47
 ....................  
 ....................  
 ....................  
-.................... #byte PortA = 5 
-.................... #byte PortB = 6 
-.................... #byte PortC = 7 
+.................... #byte PortA         = 0x05 
+.................... #byte PortB         = 0x06 
+.................... #byte PortC         = 0x07 
 ....................  
-.................... #byte SPI_CR    = 10 
-.................... #byte SPI_SR    = 11 
-.................... #byte SPI_DIO_H = 12 
-.................... #byte SPI_DIO_L = 13 
-.................... #byte Dly_Cntr  = 15 
+.................... #bit  SPI_SR_TF_EF  = 5.0 
+.................... #bit  SPI_SR_TF_FF  = 5.1 
+.................... #bit  SPI_SR_RF_EF  = 5.2 
+.................... #bit  SPI_SR_RF_FF  = 5.3 
 ....................  
-.................... #bit  SPI_CR_REn   = 10.0 
-.................... #bit  SPI_CR_SSel  = 10.1 
-.................... #bit  SPI_CR_MD0   = 10.2 
-.................... #bit  SPI_CR_MD1   = 10.3 
-.................... #bit  SPI_CR_BR0   = 10.4 
-.................... #bit  SPI_CR_BR1   = 10.5 
-.................... #bit  SPI_CR_BR2   = 10.6 
-.................... #bit  SPI_CR_DIR   = 10.7 
+.................... #byte SPI_CR        = 0x10 
+.................... #byte SPI_SR        = 0x11 
+.................... #byte SPI_DIO_H     = 0x12 
+.................... #byte SPI_DIO_L     = 0x13 
+.................... #byte Dly_Cntr      = 0x14 
 ....................  
-.................... #bit  SPI_SR_TF_EF = 5.0 
-.................... #bit  SPI_SR_TF_FF = 5.1 
-.................... #bit  SPI_SR_RF_EF = 5.2 
-.................... #bit  SPI_SR_RF_FF = 5.3 
+.................... #bit  SPI_CR_REn    = 0x10.0 
+.................... #bit  SPI_CR_SSel   = 0x10.1 
+.................... #bit  SPI_CR_MD0    = 0x10.2 
+.................... #bit  SPI_CR_MD1    = 0x10.3 
+.................... #bit  SPI_CR_BR0    = 0x10.4 
+.................... #bit  SPI_CR_BR1    = 0x10.5 
+.................... #bit  SPI_CR_BR2    = 0x10.6 
+.................... #bit  SPI_CR_DIR    = 0x10.7 
 ....................  
-.................... #bit  SPI_DIO_RRdy = 12.2 
-.................... #bit  SPI_DIO_RErr = 12.0 
+.................... #bit  SPI_DIO_RRdy  = 0x12.2 
+.................... #bit  SPI_DIO_RErr  = 0x12.0 
 ....................  
-.................... #bit  RD_Ext_ASCII = 13.7 
+.................... #bit  RD_Ext_ASCII  = 0x13.7 
+....................  
+.................... #define COM0 0x00 
+.................... #define COM1 0x80 
 ....................  
 .................... #use fast_io(ALL) 
 ....................  
-.................... void main() 
+.................... void set_baud(int port) 
 .................... { 
-....................     set_tris_A(0xFF); 
+....................     PortC = (port ^ 0x13); 
 *
-0001:  MOVLW  FF
-0002:  TRIS   5
-....................     set_tris_B(0xFF); 
-0003:  TRIS   6
-....................      
-....................     set_tris_C(0x1E); 
-0004:  MOVLW  1E
-0005:  TRIS   7
-....................     SPI_CR = 0x1E; 
-0006:  MOVWF  0A
-....................  
-....................     Dly_Cntr = 8; 
-0007:  MOVLW  08
-0008:  MOVWF  0F
-....................     while(--Dly_Cntr > 0); 
-0009:  DECFSZ 0F,F
-000A:  GOTO   009
-....................      
-....................     PortC = 0x13; 
-000B:  MOVLW  13
-000C:  MOVWF  07
+0004:  MOVF   0D,W
+0005:  XORLW  13
+0006:  MOVWF  07
 ....................     PortC = 0x00; 
-000D:  CLRF   07
-....................     PortC = 0x30; 
-000E:  MOVLW  30
-000F:  MOVWF  07
+0007:  CLRF   07
+....................     PortC = (port ^ 0x30); 
+0008:  MOVF   0D,W
+0009:  XORLW  30
+000A:  MOVWF  07
 ....................     PortC = 0x01; 
-0010:  MOVLW  01
-0011:  MOVWF  07
+000B:  MOVLW  01
+000C:  MOVWF  07
+....................  
+....................     while(~SPI_SR_TF_EF); 
+000D:  BTFSS  05.0
+000E:  GOTO   00D
+000F:  RETLW  00
+.................... } 
+....................  
+.................... int1 get_char(int port) 
+.................... { 
+....................     SPI_CR_REn = 1; 
+0010:  BSF    10.0
+....................     set_tris_C(SPI_CR); 
+0011:  MOVF   10,W
+0012:  TRIS   7
 ....................      
-....................     while(~SPI_SR_TF_EF);    
-0012:  BTFSS  05.0
-0013:  GOTO   012
 ....................      
-....................     while(TRUE) { 
-....................         // Read UART Receive FIFO 
-....................                  
-....................         SPI_CR_REn = 1;  
-0014:  BSF    0A.0
-....................         set_tris_C(SPI_CR); 
-0015:  MOVF   0A,W
-0016:  TRIS   7
-....................          
-....................         do { 
-....................             PortC = 0x60; PortC = 0xFF; 
-0017:  MOVLW  60
-0018:  MOVWF  07
-0019:  MOVLW  FF
-001A:  MOVWF  07
-....................              
-....................             while(~SPI_SR_TF_EF); SPI_DIO_H = PortC; 
-001B:  BTFSS  05.0
-001C:  GOTO   01B
-001D:  MOVF   07,W
-001E:  MOVWF  0C
-....................             while( SPI_SR_RF_EF); SPI_DIO_L = PortC; 
-001F:  BTFSC  05.2
-0020:  GOTO   01F
-0021:  MOVF   07,W
-0022:  MOVWF  0D
-....................              
-....................         } while(~SPI_DIO_RRdy || SPI_DIO_RErr); 
-0023:  BTFSS  0C.2
-0024:  GOTO   017
-0025:  BTFSC  0C.0
-0026:  GOTO   017
-....................          
+....................     PortC = (port ^ 0x60); PortC = 0xFF; 
+0013:  MOVF   0D,W
+0014:  XORLW  60
+0015:  MOVWF  07
+0016:  MOVLW  FF
+0017:  MOVWF  07
+....................      
+....................     while(~SPI_SR_TF_EF); SPI_DIO_H = PortC; 
+0018:  BTFSS  05.0
+0019:  GOTO   018
+001A:  MOVF   07,W
+001B:  MOVWF  12
+....................     while( SPI_SR_RF_EF); SPI_DIO_L = PortC; 
+001C:  BTFSC  05.2
+001D:  GOTO   01C
+001E:  MOVF   07,W
+001F:  MOVWF  13
+....................      
+....................     return(SPI_DIO_RRdy && ~SPI_DIO_RErr); 
+0020:  BTFSS  12.2
+0021:  GOTO   024
+0022:  BTFSS  12.0
+0023:  GOTO   026
+0024:  MOVLW  00
+0025:  GOTO   027
+0026:  MOVLW  01
+0027:  MOVWF  09
+0028:  RETLW  00
+.................... } 
+....................  
+.................... void put_char(int port) 
+.................... { 
 ....................         // Process received data - lc to uc and uc to lc, otherwise unchanged 
 ....................          
 ....................         if(~RD_Ext_ASCII) {     // if Extended ASCII data, skip conversion 
-0027:  BTFSC  0D.7
-0028:  GOTO   043
+0029:  BTFSC  13.7
+002A:  GOTO   045
 ....................             if((SPI_DIO_L >= 'A') && (SPI_DIO_L <= 'z')) { 
-0029:  MOVLW  40
-002A:  MOVWF  08
-002B:  MOVF   0D,W
-002C:  SUBWF  08,W
-002D:  BTFSC  03.0
-002E:  GOTO   043
-002F:  MOVLW  7A
-0030:  MOVWF  08
-0031:  MOVF   0D,W
-0032:  SUBWF  08,W
-0033:  BTFSS  03.0
-0034:  GOTO   043
+002B:  MOVLW  40
+002C:  MOVWF  08
+002D:  MOVF   13,W
+002E:  SUBWF  08,W
+002F:  BTFSC  03.0
+0030:  GOTO   045
+0031:  MOVLW  7A
+0032:  MOVWF  08
+0033:  MOVF   13,W
+0034:  SUBWF  08,W
+0035:  BTFSS  03.0
+0036:  GOTO   045
 ....................                 if((SPI_DIO_L <= 'Z') || (SPI_DIO_L >= 'a')) { 
-0035:  MOVLW  5A
-0036:  MOVWF  08
-0037:  MOVF   0D,W
-0038:  SUBWF  08,W
-0039:  BTFSC  03.0
-003A:  GOTO   041
-003B:  MOVLW  60
-003C:  MOVWF  08
-003D:  MOVF   0D,W
-003E:  SUBWF  08,W
-003F:  BTFSC  03.0
-0040:  GOTO   043
+0037:  MOVLW  5A
+0038:  MOVWF  08
+0039:  MOVF   13,W
+003A:  SUBWF  08,W
+003B:  BTFSC  03.0
+003C:  GOTO   043
+003D:  MOVLW  60
+003E:  MOVWF  08
+003F:  MOVF   13,W
+0040:  SUBWF  08,W
+0041:  BTFSC  03.0
+0042:  GOTO   045
 ....................                     SPI_DIO_L ^= 0x20; 
-0041:  MOVLW  20
-0042:  XORWF  0D,F
+0043:  MOVLW  20
+0044:  XORWF  13,F
 ....................                 } 
 ....................             } 
 ....................         } 
@@ -170,25 +169,83 @@ CCS PCB C Compiler, Version 5.006, 9513               20-Apr-14 10:47
 ....................         // Write processed data to UART transmit FIFO 
 ....................  
 ....................         SPI_CR_REn = 0; 
-0043:  BCF    0A.0
+0045:  BCF    10.0
 ....................         set_tris_C(SPI_CR); 
-0044:  MOVF   0A,W
-0045:  TRIS   7
+0046:  MOVF   10,W
+0047:  TRIS   7
 ....................          
-....................         PortC = 0x50; PortC = SPI_DIO_L;    // Transmit processed data 
-0046:  MOVLW  50
-0047:  MOVWF  07
+....................         PortC = (port ^ 0x50); PortC = SPI_DIO_L;    // Transmit data 
 0048:  MOVF   0D,W
-0049:  MOVWF  07
+0049:  XORLW  50
+004A:  MOVWF  07
+004B:  MOVF   13,W
+004C:  MOVWF  07
 ....................          
 ....................         while(~SPI_SR_TF_EF); 
-004A:  BTFSS  05.0
-004B:  GOTO   04A
-004C:  GOTO   014
+004D:  BTFSS  05.0
+004E:  GOTO   04D
+004F:  RETLW  00
+.................... } 
+....................  
+....................  
+.................... void main() 
+.................... { 
+....................     set_tris_A(0xFF); 
+0050:  MOVLW  FF
+0051:  TRIS   5
+....................     set_tris_B(0xFF); 
+0052:  TRIS   6
+....................      
+....................     set_tris_C(0x1E); 
+0053:  MOVLW  1E
+0054:  TRIS   7
+....................     SPI_CR = 0x1E; 
+0055:  MOVWF  10
+....................  
+....................     Dly_Cntr = 8; 
+0056:  MOVLW  08
+0057:  MOVWF  14
+....................     while(--Dly_Cntr > 0); 
+0058:  DECFSZ 14,F
+0059:  GOTO   058
+....................      
+....................     set_baud(COM0); 
+005A:  CLRF   0D
+005B:  CALL   004
+....................     set_baud(COM1); 
+005C:  MOVLW  80
+005D:  MOVWF  0D
+005E:  CALL   004
+....................      
+....................     while(TRUE) { 
+....................         if(get_char(COM0)) { 
+005F:  CLRF   0D
+0060:  CALL   010
+0061:  MOVF   09,F
+0062:  BTFSC  03.2
+0063:  GOTO   066
+....................             put_char(COM0); 
+0064:  CLRF   0D
+0065:  CALL   029
+....................         }     
+....................          
+....................         if(get_char(COM1)) { 
+0066:  MOVLW  80
+0067:  MOVWF  0D
+0068:  CALL   010
+0069:  MOVF   09,F
+006A:  BTFSC  03.2
+006B:  GOTO   06F
+....................             put_char(COM1); 
+006C:  MOVLW  80
+006D:  MOVWF  0D
+006E:  CALL   029
+....................         }     
+006F:  GOTO   05F
 ....................     } 
 ....................  
 .................... } 
-004D:  SLEEP
+0070:  SLEEP
 
 Configuration Fuses:
    Word  1: 0FFA   HS NOWDT NOPROTECT
